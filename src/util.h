@@ -18,10 +18,15 @@ namespace SC {
   template<>
   struct StaticAssert<true> {};
 
-  template<typename T1, typename T2>
-  struct SameType { enum { result = false }; };
-  template<typename T> 
-  struct SameType<T, T> { enum { result = true }; };
+  template<typename T>
+  struct IsReference { enum { result = false }; };
+  template<typename T>
+  struct IsReference<T&> { enum { result = true }; };
+
+  template<typename T>
+  struct RemoveReference { typedef T result; };
+  template<typename T>
+  struct RemoveReference<T&> { typedef T result; };
 
   template<typename T>
   struct IsPointer { enum { result = false }; };
@@ -32,6 +37,41 @@ namespace SC {
   struct RemovePointer { typedef T result; };
   template<typename T>
   struct RemovePointer<T*> { typedef T result; };
+
+  template<typename T>
+  struct IsConst { enum { result = false }; };
+  template<typename T>
+  struct IsConst<const T> { enum { result = true }; };
+
+  template<typename T>
+  struct RemoveConst { typedef T result; };
+  template<typename T>
+  struct RemoveConst<const T> { typedef T result; };
+
+  template<typename T1, typename T2>
+  struct SameType { enum { result = false }; };
+  template<typename T> 
+  struct SameType<T, T> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<const T, T> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<T, const T> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<T&, T> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<T, T&> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<T*, T> { enum { result = true }; };
+  template<typename T> 
+  struct SameType<T, T*> { enum { result = true }; };
+
+
+
+
+
+
+
+
 
   template<typename T>
   struct IsInteger { enum { result = false }; };
@@ -197,6 +237,20 @@ namespace SC {
     return tokens;
   }
 
+  inline void replace_first(std::string &str, const std::string &what, const std::string &with = std::string())
+  {
+    std::size_t pos = str.find(what);
+    if (pos != std::string::npos)
+      str.replace(pos, what.size(), with);
+  }
+
+  inline std::string replace_first(const std::string &str, const std::string &what, const std::string &with = std::string())
+  {
+    std::string tmp(str);
+    replace_first(tmp, what, with);
+    return tmp;
+  }
+
   inline void replace_all(std::string &str, const std::string &what, const std::string &with = std::string())
   {
     std::size_t last_pos = 0, pos;
@@ -211,6 +265,21 @@ namespace SC {
     std::string tmp(str);
     replace_all(tmp, what, with);
     return tmp;
+  }
+
+  inline void strip(std::string &str)
+  {
+    while (str.size() && str[0] == ' ')
+      str = str.substr(1);
+    while (str.size() && str[str.size() - 1] == ' ')
+      str.resize(str.size() - 1);
+  }
+
+  inline std::string stripped(const std::string &str)
+  {
+    std::string result(str);
+    strip(result);
+    return result;
   }
 
   template<typename T>
@@ -231,13 +300,78 @@ namespace SC {
   template<typename T1, typename T2, int index = PairFirst, template<typename> class Compare = std::less>
   struct SortPairs
   {
+    typedef typename Select<index == PairFirst, T1, T2>::result value_type;
+
     enum { First = 0, Second = 1 };
     bool operator()(const std::pair<T1, T2> &left, const std::pair<T1, T2> &right) const
     {
       return index == PairFirst ? compare(left.first, right.first) : compare(left.second, right.second);
     }
 
-    typename Select<index == PairFirst, Compare<T1>, Compare<T2> >::result compare;
+    Compare<value_type> compare;
+  };
+
+  template<typename T1, typename T2, int index = PairFirst, template<typename> class Compare = std::equal_to>
+  struct FindPair
+  {
+    typedef typename Select<index == PairFirst, T1, T2>::result value_type;
+
+    FindPair(value_type value_) : value(value_)
+    {
+    }
+
+    bool operator()(const std::pair<T1, T2> &p) const 
+    {
+      return index == PairFirst ? compare(reinterpret_cast<value_type>(p.first), value) : compare(reinterpret_cast<value_type>(p.second), value);
+    } 
+    
+    Compare<value_type> compare;
+    value_type value;
+  };
+
+  template<typename T>
+  struct ContainerSize
+  {
+    typedef typename T::size_type property_type;
+
+    bool operator()(const T &c) const
+    {
+      return c.size();
+    }
+  };
+
+  template<typename T>
+  struct ContainerMinElement
+  {
+    typedef typename T::value_type property_type;
+
+    bool operator()(const T &c) const
+    {
+      return *std::min_element(c.begin(), c.end());
+    }
+  };
+
+  template<typename T>
+  struct ContainerMaxElement
+  {
+    typedef typename T::value_type property_type;
+
+    bool operator()(const T &c) const
+    {
+      return *std::max_element(c.begin(), c.end());
+    }
+  };
+
+  template<typename T, template<typename> class Property = ContainerSize, template<typename> class Compare = std::less>
+  struct SortContainers
+  {
+    bool operator()(const T &left, const T &right) const
+    {
+      return compare(property(left), property(right));
+    }
+
+    Property<T> property;
+    Compare<typename Property<T>::property_type> compare;
   };
 
 }

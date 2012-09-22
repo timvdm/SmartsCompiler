@@ -12,169 +12,221 @@
 
 namespace SC {
 
-  bool SmartsPattern::CallEvalExpr(int index, OpenBabel::OBAtom *atom) const
+  template<typename MappingType>
+  inline void ClearMapping(MappingType &mapping)
   {
-    return EvalAtomExpr(index, atom);
+    mapping.clear();
+  }
+  template<>
+  inline void ClearMapping<NoMapping>(NoMapping &mapping) 
+  {
+    mapping.match = false;
+  }
+  template<>
+  inline void ClearMapping<SingleMapping>(SingleMapping &mapping) 
+  {
+    mapping.map.clear();
+  }
+  template<>
+  inline void ClearMapping<CountMapping>(CountMapping &mapping)
+  {
+    mapping.count = 0;
+  }
+  template<>
+  inline void ClearMapping<MappingList>(MappingList &mapping)
+  {
+    mapping.maps.clear();
   }
 
-  bool SmartsPattern::CallEvalExpr(int index, OpenBabel::OBBond *bond) const
+  inline void AddMapping(SingleVectorMapping &mapping, std::vector<int> &map)
   {
-    return EvalBondExpr(index, bond);
+    mapping.swap(map);
+  }
+  inline void AddMapping(VectorMappingList &mapping, std::vector<int> &map)
+  {
+    mapping.push_back(map);
+  }
+  inline void AddMapping(NoMapping &mapping, std::vector<int> &map) 
+  {
+    mapping.match = true;
+  }
+  inline void AddMapping(SingleMapping &mapping, std::vector<int> &map) 
+  {
+    mapping.map.swap(map);
+  }
+  inline void AddMapping(CountMapping &mapping, std::vector<int> &map)
+  {
+    mapping.count++;
+  }
+  inline void AddMapping(MappingList &mapping, std::vector<int> &map)
+  {
+    mapping.maps.push_back(map);
   }
 
-#ifdef HAVE_PYTHON
-  bool PythonSmartsPattern::CallEvalExpr(int index, OpenBabel::OBAtom *atom) const
+  template<typename MappingType>
+  inline bool EmptyMapping(MappingType &mapping)
   {
-    //std::cout << "PyCallable_Check: " << PyCallable_Check(EvalAtomExpr) << std::endl;
-    //std::cout << "PyFunction_Check: " << PyFunction_Check(EvalAtomExpr) << std::endl;
-    PyObject *result = PyEval_CallFunction(EvalAtomExpr, "ii", index, atom->GetIdx());
-    //std::cout << "PyBool_Check: " << PyBool_Check(result) << std::endl;
-    PyErr_Print();
-    return result == Py_True;
+    return mapping.empty();
+  }
+  template<>
+  inline bool EmptyMapping<NoMapping>(NoMapping &mapping) 
+  {
+    return mapping.match;
+  }
+  template<>
+  inline bool EmptyMapping<SingleMapping>(SingleMapping &mapping) 
+  {
+    return mapping.map.empty();
+  }
+  template<>
+  inline bool EmptyMapping<CountMapping>(CountMapping &mapping)
+  {
+    return mapping.count == 0;
+  }
+  template<>
+  inline bool EmptyMapping<MappingList>(MappingList &mapping)
+  {
+    return mapping.maps.empty();
   }
 
-  bool PythonSmartsPattern::CallEvalExpr(int index, OpenBabel::OBBond *bond) const
-  {
-    PyObject *result = PyEval_CallFunction(EvalBondExpr, "ii", index, bond->GetIdx());
-    PyErr_Print();
-    return result == Py_True;
-  }
-#endif
-
-using namespace OpenBabel;
+  using namespace OpenBabel;
   
-const int SmartsImplicitRef = -9999; // Used as a placeholder when recording atom nbrs for chiral atoms
+  const int SmartsImplicitRef = -9999; // Used as a placeholder when recording atom nbrs for chiral atoms
 
-//! \class SSMatch parsmart.h <openbabel/parsmart.h>
-//! \brief Internal class: performs fast, exhaustive matching used to find
-//! just a single match in match() using recursion and explicit stack handling.
-template<typename PatternType>
-class SSMatch
-{
-  public:
-    SSMatch(OBMol &mol, PatternType *pattern)
-    {
-      m_mol = &mol;
-      m_pat = pattern;
-      m_map.resize(pattern->numAtoms);
+  //! \class SSMatch parsmart.h <openbabel/parsmart.h>
+  //! \brief Internal class: performs fast, exhaustive matching used to find
+  //! just a single match in match() using recursion and explicit stack handling.
+  template<typename PatternType, typename MappingType, typename MolAtomIterType,
+           typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
+  class SSMatch
+  {
+    public:
+      SSMatch(OBMol &mol, PatternType *pattern)
+      {
+        m_mol = &mol;
+        m_pat = pattern;
+        m_map.resize(pattern->numAtoms);
 
-      if (!mol.Empty()) {
-        m_uatoms = new bool [mol.NumAtoms()+1];
-        memset((char*)m_uatoms, '\0', sizeof(bool) * (mol.NumAtoms() + 1));
-      } else
-        m_uatoms = (bool*)NULL;
-
-    }
-    
-    ~SSMatch()
-    {
-      if (m_uatoms)
-        delete [] m_uatoms;
-    }
-
-    void Match(std::vector<std::vector<int> > &v, int bidx=-1);
-  private:
-    bool *m_uatoms;
-    OBMol *m_mol;
-    PatternType *m_pat;
-    std::vector<int>  m_map;
-};
-
-template<typename PatternType>
-void SSMatch<PatternType>::Match(std::vector<std::vector<int> > &mlist, int bidx)
-{
-  SmartsMatcher matcher;
-  if (bidx == -1) {
-    OBAtom *atom;
-    std::vector<OBAtom*>::iterator i;
-    for (atom = m_mol->BeginAtom(i); atom; atom = m_mol->NextAtom(i))
-      if (m_pat->CallEvalExpr(0, atom)) {
-        m_map[0] = atom->GetIdx();
-        m_uatoms[atom->GetIdx()] = true;
-        Match(mlist,0);
-        m_map[0] = 0;
-        m_uatoms[atom->GetIdx()] = false;
+        if (!mol.Empty()) {
+          m_uatoms = new bool [mol.NumAtoms() + 1];
+          memset((char*)m_uatoms, '\0', sizeof(bool) * (mol.NumAtoms() + 1));
+        } else
+          m_uatoms = (bool*)NULL;
       }
-    return;
-  }
 
-  //if (bidx == m_pat->bcount) { //save full match here
-  if (bidx == m_pat->bonds.size()) { //save full match here
-    mlist.push_back(m_map);
-    return;
-  }
+      ~SSMatch()
+      {
+        if (m_uatoms)
+          delete [] m_uatoms;
+      }
 
-  if (m_pat->bonds[bidx].grow) { //match the next bond
-    int src = m_pat->bonds[bidx].src;
-    int dst = m_pat->bonds[bidx].dst;
+      void Match(MappingType &mapping, int bidx = -1);
+    private:
+      bool *m_uatoms;
+      OBMol *m_mol;
+      PatternType *m_pat;
+      std::vector<int>  m_map;
+  };
 
-    if (m_map[src] <= 0 || m_map[src] > (signed)m_mol->NumAtoms())
+  template<typename PatternType, typename MappingType, typename MolAtomIterType,
+           typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
+  void SSMatch<PatternType, MappingType, MolAtomIterType, MolBondIterType,
+               AtomAtomIterType, AtomBondIterType>::Match(MappingType &mapping, int bidx)
+  {
+    SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType> matcher;
+    if (bidx == -1) {
+      OBAtom *atom;
+      std::vector<OBAtom*>::iterator i;
+      for (atom = m_mol->BeginAtom(i); atom; atom = m_mol->NextAtom(i))
+        if (m_pat->CallEvalAtomExpr(0, atom)) {
+          m_map[0] = atom->GetIdx();
+          m_uatoms[atom->GetIdx()] = true;
+          Match(mapping, 0);
+          m_map[0] = 0;
+          m_uatoms[atom->GetIdx()] = false;
+        }
       return;
+    }
 
-    OBAtom *atom, *nbr;
-    std::vector<OBBond*>::iterator i;
+    //if (bidx == m_pat->bcount) { //save full match here
+    if (bidx == m_pat->bonds.size()) { //save full match here
+      AddMapping(mapping, m_map);
+      return;
+    }
 
-    atom = m_mol->GetAtom(m_map[src]);
-    for (nbr = atom->BeginNbrAtom(i); nbr; nbr = atom->NextNbrAtom(i))
-      if (!m_uatoms[nbr->GetIdx()] && m_pat->CallEvalExpr(dst, nbr) &&
-          m_pat->CallEvalExpr(bidx, ((OBBond*) *i))) {
-        m_map[dst] = nbr->GetIdx();
-        m_uatoms[nbr->GetIdx()] = true;
-        Match(mlist,bidx+1);
-        m_uatoms[nbr->GetIdx()] = false;
-        m_map[dst] = 0;
-      }
-  } else { //just check bond here
-    OBBond *bond = m_mol->GetBond(m_map[m_pat->bonds[bidx].src], m_map[m_pat->bonds[bidx].dst]);
-    if (bond && m_pat->CallEvalExpr(bidx, bond))
-      Match(mlist, bidx + 1);
+    if (m_pat->bonds[bidx].grow) { //match the next bond
+      int src = m_pat->bonds[bidx].src;
+      int dst = m_pat->bonds[bidx].dst;
+
+      if (m_map[src] <= 0 || m_map[src] > (signed)m_mol->NumAtoms())
+        return;
+
+      OBAtom *atom, *nbr;
+      std::vector<OBBond*>::iterator i;
+
+      atom = m_mol->GetAtom(m_map[src]);
+      for (nbr = atom->BeginNbrAtom(i); nbr; nbr = atom->NextNbrAtom(i))
+        if (!m_uatoms[nbr->GetIdx()] && m_pat->CallEvalAtomExpr(dst, nbr) &&
+            m_pat->CallEvalBondExpr(bidx, ((OBBond*) *i))) {
+          m_map[dst] = nbr->GetIdx();
+          m_uatoms[nbr->GetIdx()] = true;
+          Match(mapping, bidx + 1);
+          m_uatoms[nbr->GetIdx()] = false;
+          m_map[dst] = 0;
+        }
+    } else { //just check bond here
+      OBBond *bond = m_mol->GetBond(m_map[m_pat->bonds[bidx].src], m_map[m_pat->bonds[bidx].dst]);
+      if (bond && m_pat->CallEvalBondExpr(bidx, bond))
+        Match(mapping, bidx + 1);
+    }
   }
-}
 
-/*
-void SmartsMatcher::SetupAtomMatchTable(std::vector<std::vector<bool> > &ttab,
-    const SmartsPattern *pat, OBMol &mol)
-{
+  /*
+  void SmartsMatcher::SetupAtomMatchTable(std::vector<std::vector<bool> > &ttab,
+  const SmartsPattern *pat, OBMol &mol)
+  {
   int i;
 
   ttab.resize(pat->acount);
   for (i = 0;i < pat->acount;++i)
-    ttab[i].resize(mol.NumAtoms()+1);
+  ttab[i].resize(mol.NumAtoms()+1);
 
   OBAtom *atom;
   std::vector<OBAtom*>::iterator j;
   for (i = 0;i < pat->acount;++i)
-    for (atom = mol.BeginAtom(j);atom;atom = mol.NextAtom(j))
-      if (EvalAtomExpr(pat->atom[0].expr,atom))
-        ttab[i][atom->GetIdx()] = true;
-}
-*/
-
-template<typename PatternType>
-void SmartsMatcher::FastSingleMatch(OBMol &mol, PatternType *pat,
-    std::vector<std::vector<int> > &mlist)
-{
-  OBAtom *atom,*a1,*nbr;
-  std::vector<OBAtom*>::iterator i;
-
-  OBBitVec bv(mol.NumAtoms()+1);
-  std::vector<int> map;
-  //map.resize(pat->acount);
-  map.resize(pat->numAtoms);
-  std::vector<std::vector<OBBond*>::iterator> vi;
-  std::vector<bool> vif;
-
-  //if (pat->bcount) {
-  if (pat->bonds.size()) {
-    //vif.resize(pat->bcount);
-    vif.resize(pat->bonds.size());
-    //vi.resize(pat->bcount);
-    vi.resize(pat->bonds.size());
+  for (atom = mol.BeginAtom(j);atom;atom = mol.NextAtom(j))
+  if (EvalAtomExpr(pat->atom[0].expr,atom))
+  ttab[i][atom->GetIdx()] = true;
   }
+  */
 
-  int bcount;
-  for (atom = mol.BeginAtom(i); atom; atom=mol.NextAtom(i))
-    if (pat->CallEvalExpr(0, atom)) {
+  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
+  template<typename PatternType, typename MappingType>
+  void SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::FastSingleMatch(OBMol &mol, PatternType *pat, MappingType &mapping)
+  {
+    OBAtom *atom,*a1,*nbr;
+    std::vector<OBAtom*>::iterator i;
+
+    OBBitVec bv(mol.NumAtoms()+1);
+    std::vector<int> map;
+    //map.resize(pat->acount);
+    map.resize(pat->numAtoms);
+    std::vector<std::vector<OBBond*>::iterator> vi;
+    std::vector<bool> vif;
+
+    //if (pat->bcount) {
+    if (pat->bonds.size()) {
+      //vif.resize(pat->bcount);
+      vif.resize(pat->bonds.size());
+      //vi.resize(pat->bcount);
+      vi.resize(pat->bonds.size());
+    }
+
+    int bcount;
+    for (atom = mol.BeginAtom(i); atom; atom=mol.NextAtom(i)) {
+      if (!pat->CallEvalAtomExpr(0, atom))
+        continue;
+
       map[0] = atom->GetIdx();
       if (pat->bonds.size())
         vif[0] = false;
@@ -184,7 +236,7 @@ void SmartsMatcher::FastSingleMatch(OBMol &mol, PatternType *pat,
       for (bcount = 0; bcount >= 0;) {
         //***entire pattern matched***
         if (bcount == pat->bonds.size()) { //save full match here
-          mlist.push_back(map);
+          AddMapping(mapping, map);
           bcount--;
           return; //found a single match
         }
@@ -193,7 +245,7 @@ void SmartsMatcher::FastSingleMatch(OBMol &mol, PatternType *pat,
         if (!pat->bonds[bcount].grow) { //just check bond here
           if (!vif[bcount]) {
             OBBond *bond = mol.GetBond(map[pat->bonds[bcount].src], map[pat->bonds[bcount].dst]);
-            if (bond && pat->CallEvalExpr(bcount, bond)) {
+            if (bond && pat->CallEvalBondExpr(bcount, bond)) {
               vif[bcount++] = true;
               if (bcount < pat->bonds.size())
                 vif[bcount] = false;
@@ -213,8 +265,8 @@ void SmartsMatcher::FastSingleMatch(OBMol &mol, PatternType *pat,
 
           for (; nbr; nbr = a1->NextNbrAtom(vi[bcount]))
             if (!bv[nbr->GetIdx()])
-              if (pat->CallEvalExpr(pat->bonds[bcount].dst, nbr)
-                  && pat->CallEvalExpr(bcount, (OBBond *)*(vi[bcount]))) {
+              if (pat->CallEvalAtomExpr(pat->bonds[bcount].dst, nbr)
+                  && pat->CallEvalBondExpr(bcount, (OBBond *)*(vi[bcount]))) {
                 bv.SetBitOn(nbr->GetIdx());
                 map[pat->bonds[bcount].dst] = nbr->GetIdx();
                 vif[bcount] = true;
@@ -227,36 +279,36 @@ void SmartsMatcher::FastSingleMatch(OBMol &mol, PatternType *pat,
           if (!nbr)//no match - time to backtrack
             bcount--;
         }
-      }
-    }
-}
-
-
-template<typename PatternType>
-bool SmartsMatcher::Match(OBMol &mol, PatternType *pat,
-    std::vector<std::vector<int> > &mlist, bool single)
-{
-  mlist.clear();
-  if (!pat || pat->numAtoms == 0)
-    return(false);//shouldn't ever happen
-
-  if (single && !pat->ischiral) {
-    // perform a fast single match (only works for non-chiral SMARTS)
-    FastSingleMatch(mol, pat, mlist);
-  } else {
-    // perform normal match (chirality ignored and checked below)
-    SSMatch<PatternType> ssm(mol, pat);
-    ssm.Match(mlist);
+      } // for bcount
+    } // for atom
   }
+
+
+  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
+  template<typename PatternType, typename MappingType>
+  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(OBMol &mol, PatternType *pat, MappingType &mapping)
+  {
+    ClearMapping(mapping);
+    if (!pat || pat->numAtoms == 0)
+      return(false);//shouldn't ever happen
+
+    if (DoSingleMapping<MappingType>::result && !pat->ischiral) {
+      // perform a fast single match (only works for non-chiral SMARTS)
+      FastSingleMatch(mol, pat, mapping);
+    } else {
+      // perform normal match (chirality ignored and checked below)
+      SSMatch<PatternType, MappingType, MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType> ssm(mol, pat);
+      ssm.Match(mapping);
+    }
 
   /*
   if (pat->ischiral) {
     std::vector<std::vector<int> >::iterator m;
-    std::vector<std::vector<int> > tmpmlist;
+    std::vector<std::vector<int> > tmpmapping;
 
-    tmpmlist.clear();
+    tmpmapping.clear();
     // iterate over the atom mappings
-    for (m = mlist.begin();m != mlist.end();++m) {
+    for (m = mapping.begin();m != mapping.end();++m) {
 
       bool allStereoCentersMatch = true;
 
@@ -336,122 +388,139 @@ bool SmartsMatcher::Match(OBMol &mol, PatternType *pat,
       // if all the atoms in the molecule match the stereochemistry specified
       // in the smarts pattern, save this mapping as a match
       if (allStereoCentersMatch)
-        tmpmlist.push_back(*m);
+        tmpmapping.push_back(*m);
     }
 
-    mlist = tmpmlist;
+    mapping = tmpmapping;
   }
   */
 
-  return(!mlist.empty());
-}
+    return !EmptyMapping(mapping);
+  }
 
 #ifdef HAVE_PYTHON
 
-bool SmartsMatcher::Match(PyObject *obj, PythonSmartsPattern *pat,
-    PyObject *mlist, bool single)
-{
-  if (!PyObject_HasAttrString(obj, "this")) {
-    std::cout << "SmilesMatch::Match: mol argument is not a SWIG proxy." << std::endl;
-    return false;
-  }
-  PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(obj, "this"));
-  if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
-    std::cout << "SmilesMatch::Match: mol argument has wrong type." << std::endl;
-    return false;
-  }
+  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
+  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(PyObject *obj, PythonSmartsPattern *pat, PyObject *mapping)
+  {
+    if (!PyObject_HasAttrString(obj, "this")) {
+      std::cout << "SmilesMatch::Match: mol argument is not a SWIG proxy." << std::endl;
+      return false;
+    }
+    PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(obj, "this"));
+    if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
+      std::cout << "SmilesMatch::Match: mol argument has wrong type." << std::endl;
+      return false;
+    }
 
-  if (!PyList_Check(mlist))
-    std::cout << "SmilesMatch::Match: mlist argument is not a python list." << std::endl;
+    if (!PyList_Check(mapping))
+      std::cout << "SmilesMatch::Match: mapping argument is not a python list." << std::endl;
 
-  OBMol *mol = static_cast<OBMol*>(swigObject->ptr);
+    OBMol *mol = static_cast<OBMol*>(swigObject->ptr);
 
-  std::vector<std::vector<int> > mappings;
-  bool result = Match(*mol, pat, mappings, single); 
+    std::vector<std::vector<int> > mappings;
+    bool result = Match(*mol, pat, mappings); 
 
-  for (std::size_t i = 0; i < mappings.size(); ++i) {
-    PyObject *list = PyList_New(0);
-    PyList_Append(mlist, list);
-    for (std::size_t j = 0; j < mappings[i].size(); ++j)
-      PyList_Append(list, PyInt_FromLong(mappings[i][j]));
-  }
+    for (std::size_t i = 0; i < mappings.size(); ++i) {
+      PyObject *list = PyList_New(0);
+      PyList_Append(mapping, list);
+      for (std::size_t j = 0; j < mappings[i].size(); ++j)
+        PyList_Append(list, PyInt_FromLong(mappings[i][j]));
+    }
 
-  return result;
-}
-
-bool Match(const std::string &pythonFileOrModuleName, OpenBabel::OBMol &mol, const std::string &smarts, std::vector<std::vector<int> > &mlist, bool single)
-{
-  if (!Py_IsInitialized())
-    Py_Initialize();
-
-  std::string path, moduleName = pythonFileOrModuleName;
-  if (moduleName.find(".py") != std::string::npos)
-    moduleName.resize(moduleName.size() - 3);
-  std::size_t forwardslash = moduleName.rfind("/");
-  if (forwardslash != std::string::npos) {
-    path = moduleName.substr(0, forwardslash);
-    moduleName = moduleName.substr(forwardslash + 1);
-  } else {
-    std::size_t backwardslash = moduleName.rfind("\\");
-    path = moduleName.substr(0, backwardslash);
-    moduleName = moduleName.substr(backwardslash + 1);
+    return result;
   }
 
-  PyRun_SimpleString("import sys\nsys.path.append('.')");
-  if (path.size())
-    PyRun_SimpleString(make_string("import sys\nsys.path.append('" + path + "')").c_str());
-  PyErr_Print();
+  template<typename MappingType>
+  bool Match(const std::string &pythonFileOrModuleName, OpenBabel::OBMol &mol, const std::string &smarts, MappingType &mapping)
+  {
+    if (!Py_IsInitialized())
+      Py_Initialize();
 
-  PyObject *module = PyImport_ImportModule(moduleName.c_str());
-  if (!module) {
+    std::string path, moduleName = pythonFileOrModuleName;
+    if (moduleName.find(".py") != std::string::npos)
+      moduleName.resize(moduleName.size() - 3);
+    std::size_t forwardslash = moduleName.rfind("/");
+    if (forwardslash != std::string::npos) {
+      path = moduleName.substr(0, forwardslash);
+      moduleName = moduleName.substr(forwardslash + 1);
+    } else {
+      std::size_t backwardslash = moduleName.rfind("\\");
+      path = moduleName.substr(0, backwardslash);
+      moduleName = moduleName.substr(backwardslash + 1);
+    }
+
+    PyRun_SimpleString("import sys\nsys.path.append('.')");
+    if (path.size())
+      PyRun_SimpleString(make_string("import sys\nsys.path.append('" + path + "')").c_str());
     PyErr_Print();
-    return false;
+
+    PyObject *module = PyImport_ImportModule(moduleName.c_str());
+    if (!module) {
+      PyErr_Print();
+      return false;
+    }
+
+    if (!PyObject_HasAttrString(module, "mol")) {
+      std::cout << moduleName << " is not a valid SmartsCompiler module (no mol)." << std::endl;
+      return false;
+    }
+
+    PyObject *proxy = PyObject_GetAttrString(module, "mol");
+    if (!PyObject_HasAttrString(proxy, "this")) {
+      std::cout << moduleName << " is not a valid SmartsCompiler module (no mol.this)." << std::endl;
+      return false;
+    }
+
+    PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(proxy, "this"));
+    if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
+      std::cout << moduleName << " is not a valid SmartsCompiler module (mol type incorrect)." << std::endl;
+      return false;
+    }
+
+    *static_cast<OBMol*>(swigObject->ptr) = mol;
+
+    if (!PyObject_HasAttrString(module, "MatchGlobalMol")) {
+      std::cout << moduleName << " is not a valid SmartsCompiler module (no MatchGlobalMol)." << std::endl;
+      return false;
+    }
+
+    PyObject *match = PyObject_GetAttrString(module, "MatchGlobalMol");
+    if (!PyFunction_Check(match)) {
+      std::cout << moduleName << " is not a valid SmartsCompiler module (MatchGlobalMol is not a function)." << std::endl;
+      return false;
+    }
+
+    PyObject *pymapping = PyList_New(0);
+    //PyObject *pysmarts = PyString_FromString(smarts.c_str());
+    //PyObject *pysingle = single ? Py_True : Py_False;
+
+    PyObject *result = PyEval_CallFunction(match, "sOb", smarts.c_str(), pymapping, DoSingleMapping<MappingType>::result);
+    PyErr_Print();
+
+    return result == Py_True;
   }
-  
-  if (!PyObject_HasAttrString(module, "mol")) {
-    std::cout << moduleName << " is not a valid SmartsCompiler module (no mol)." << std::endl;
-    return false;
-  }
-  
-  PyObject *proxy = PyObject_GetAttrString(module, "mol");
-  if (!PyObject_HasAttrString(proxy, "this")) {
-    std::cout << moduleName << " is not a valid SmartsCompiler module (no mol.this)." << std::endl;
-    return false;
-  }
 
-  PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(proxy, "this"));
-  if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
-    std::cout << moduleName << " is not a valid SmartsCompiler module (mol type incorrect)." << std::endl;
-    return false;
-  }
-
-  *static_cast<OBMol*>(swigObject->ptr) = mol;
-
-  if (!PyObject_HasAttrString(module, "MatchGlobalMol")) {
-    std::cout << moduleName << " is not a valid SmartsCompiler module (no MatchGlobalMol)." << std::endl;
-    return false;
-  }
-  
-  PyObject *match = PyObject_GetAttrString(module, "MatchGlobalMol");
-  if (!PyFunction_Check(match)) {
-    std::cout << moduleName << " is not a valid SmartsCompiler module (MatchGlobalMol is not a function)." << std::endl;
-    return false;
-  }
-
-  PyObject *pymlist = PyList_New(0);
-  //PyObject *pysmarts = PyString_FromString(smarts.c_str());
-  //PyObject *pysingle = single ? Py_True : Py_False;
-
-  PyObject *result = PyEval_CallFunction(match, "sOb", smarts.c_str(), pymlist, single);
-  PyErr_Print();
-
-  return result == Py_True;
-}
-
-template bool SmartsMatcher::Match<PythonSmartsPattern>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, std::vector<std::vector<int> > &mlist, bool single = false);
-
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, SingleVectorMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, SingleVectorMapping &mapping);
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, VectorMappingList>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, VectorMappingList &mapping);
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, NoMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, NoMapping &mapping);
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, SingleMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, SingleMapping &mapping);
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, CountMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, CountMapping &mapping);
+  template bool SmartsMatcher<>::Match<PythonSmartsPattern, MappingList>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, MappingList &mapping);
 #endif
 
-template bool SmartsMatcher::Match<SmartsPattern>(OpenBabel::OBMol &mol, SmartsPattern *pat, std::vector<std::vector<int> > &mlist, bool single = false);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleVectorMapping>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleVectorMapping &mapping);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, VectorMappingList>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, VectorMappingList &mapping);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, NoMapping>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, NoMapping &mapping);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleMapping>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleMapping &mapping);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, CountMapping>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, CountMapping &mapping);
+  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, MappingList>(OpenBabel::OBMol &mol,
+      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, MappingList &mapping);
+
 
 }

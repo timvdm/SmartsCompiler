@@ -1,4 +1,5 @@
 #include "openbabel.h"
+#include "smartsmatcher.h"
 #include "defines.h"
 
 namespace SC {
@@ -411,5 +412,12 @@ namespace SC {
         return "";
     }
   }
+
+#ifdef HAVE_PYTHON  
+  template bool PythonSmartsPattern::CallEvalAtomExpr<OpenBabel::OBAtom>(int index, OpenBabel::OBAtom *atom) const;
+  template bool PythonSmartsPattern::CallEvalBondExpr<OpenBabel::OBBond>(int index, OpenBabel::OBBond *atom) const;
+#endif
+  
+  template struct SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>;
 
 }

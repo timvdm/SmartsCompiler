@@ -13,12 +13,18 @@ namespace SC {
 
   std::string GetExprString(const OpenBabel::AtomExpr *expr, bool implicitAnd = true);
   std::string GetExprString(const OpenBabel::BondExpr *expr, bool implicitAnd = true);
+ 
+  template<typename Expr> 
+  std::string GetBinaryExprString(const std::vector<Expr*> &expr, const std::string &op, bool implicitAnd = true);
+
 
   void PrintAtomExprTree(OpenBabel::AtomExpr *expr, int indent, SmartsScores *scores);
   void PrintBondExprTree(OpenBabel::BondExpr *expr, int indent, SmartsScores *scores);
 
   void PrintAtomSpecTree(OpenBabel::AtomSpec &spec, SmartsScores *scores);
   void PrintBondSpecTree(OpenBabel::BondSpec &spec, SmartsScores *scores);
+  
+  std::string SuppressImplicitAndHi(const std::string &expr);
 
 }
 

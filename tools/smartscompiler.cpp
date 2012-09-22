@@ -18,13 +18,17 @@ int PrintUsage(const char *exe)
   std::cerr << "  -c++                 Generate C++ code (default)" << std::endl;
   std::cerr << "  -python              Generate python code" << std::endl;
   std::cerr << "  -scores <file>       Scores file (default is pretty scores)" << std::endl;
+  std::cerr << "  -no-inline           No function inlining" << std::endl;
+  std::cerr << "  -no-switch           No switch functions" << std::endl;
+  std::cerr << "  -opt-function-names  Optimize function names (f1 f2 ...)" << std::endl;
   PrintOptimizationOptions();
   return 1;
 }
 
 int main(int argc, char**argv)
 {
-  ParseArgs args(argc, argv, ParseArgs::Args("-c++", "-python", "-module(name)", "-scores(file)"), ParseArgs::Args("smarts_file", "output_code_file"));
+  ParseArgs args(argc, argv, ParseArgs::Args("-c++", "-python", "-module(name)", "-scores(file)", "-no-inline",
+      "-no-switch", "-no-match", "-opt-function-names"), ParseArgs::Args("smarts_file", "output_code_file"));
   if (!args.IsValid())
     return PrintUsage(argv[0]);
 
@@ -51,17 +55,46 @@ int main(int argc, char**argv)
   SmartsOptimizer optimizer(scores);
 
   std::ofstream ofs(output_code_file.c_str());
-  compiler.StartSmartsModule(module, ofs);
+
+  compiler.StartSmartsModule(module, args.IsArg("-no-inline"), args.IsArg("-no-switch"), args.IsArg("-no-match"), args.IsArg("-opt-function-names"));
   
   std::ifstream ifs(smarts_file.c_str());
   std::string line;
   while (std::getline(ifs, line)) {
     OpenBabelSmartsMatcher matcher;
-    matcher.Init(line);
+    strip(line);
+    if (line.size() && line[0] == '#')
+      continue;
+    std::string function;
+    std::size_t pos;
+    bool nomap = false, count = false, atom = false;
+    while ((pos = line.rfind(" ")) != std::string::npos) {
+      std::string option = line.substr(pos + 1);
+      if (option == "nomap")
+        nomap = true;
+      else if (option == "count")
+        count = true;
+      else if (option == "atom")
+        atom = true;
+      else
+        function = option;
+
+      line.resize(pos);
+      strip(line);    
+    }
+    if (function.size() && function[0] == '#')
+      function = "";
+
+    if (!matcher.Init(line))
+      continue;
     OpenBabel::Pattern *pattern = matcher.GetPattern();
+    if (atom && pattern->acount > 1) {
+      std::cerr << "Warning: The 'atom' option is set for SMARTS " << line << " which is not a single atom SMARTS, ignoring option." << std::endl;
+      atom = false;
+    }
     optimizer.Optimize(pattern, opt);
     PrintPattern(pattern, scores);
-    compiler.GeneratePatternCode(ofs, line, pattern);
+    compiler.GeneratePatternCode(line, pattern, function, nomap, count, atom);
   }
   
   compiler.StopSmartsModule(ofs);

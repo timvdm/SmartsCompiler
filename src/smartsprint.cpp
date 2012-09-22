@@ -267,6 +267,8 @@ namespace SC {
       switch (left) {
         case 'A':
           suppressable = right != 's' && right != 'c';
+        case 'B':
+          suppressable = right != 'r';
         default:
           break;
       }
@@ -341,6 +343,7 @@ namespace SC {
         return make_string(expr->leaf.value);
       case AE_ELEM:
         switch (expr->leaf.value) {
+          case 1:
           case 6:
           case 7:
           case 8:
@@ -394,6 +397,20 @@ namespace SC {
         return expr->leaf.value == 1 ? "x" : make_string("x", expr->leaf.value);
     }
   }
+ 
+  template<typename Expr>
+  std::string GetBinaryExprString(const std::vector<Expr*> &expr, const std::string &op, bool implicitAnd)
+  {
+    std::string str;
+    for (std::size_t i = 0; i < expr.size(); ++i) {
+      if (i)
+        str += op;
+      str += GetExprString(expr[i]);
+    }
+    return implicitAnd ? SuppressImplicitAndHi(str) : str;
+  }
+
+  template std::string GetBinaryExprString<AtomExpr>(const std::vector<AtomExpr*> &expr, const std::string &op, bool implicitAnd = true);
 
   std::string GetExprString(const BondExpr *expr, bool implicitAnd)
   {

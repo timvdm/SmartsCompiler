@@ -8,7 +8,105 @@
 
 namespace SC {
 
-  class OpenBabelToolkit : public Toolkit
+  struct MockAtom
+  {
+    void SetProperties(AtomExpr *expr, bool negated = false)
+    {
+      int sign = negated ? -1 : 1;
+      switch (expr->type) {
+        case AE_NOT:
+          SetProperties(expr->mon.arg, true);
+          break;
+        case AE_AROMATIC:
+          aromatic = sign;
+          break;
+        case AE_ALIPHATIC:
+          aliphatic = sign;
+          break;
+        case AE_CYCLIC:
+          cyclic = sign;
+          break;
+        case AE_ACYCLIC:
+          acyclic = sign;
+          break;
+        case AE_DEGREE:
+          degree.push_back(sign * expr->leaf.value);
+          break;
+        case AE_HCOUNT:
+          totalH.push_back(sign * expr->leaf.value);
+          break;
+        case AE_IMPLICIT:
+          implicitH.push_back(sign * expr->leaf.value);
+          break;
+        case AE_RINGS:
+          numrings.push_back(sign * expr->leaf.value);
+          break;
+        case AE_SIZE:
+          ringsize.push_back(sign * expr->leaf.value);
+          break;
+        case AE_VALENCE:
+          valence.push_back(sign * expr->leaf.value);
+          break;
+        case AE_CONNECT:
+          connect.push_back(sign * expr->leaf.value);
+          break;
+        case AE_RINGCONNECT:
+          ringconnect.push_back(sign * expr->leaf.value);
+          break;
+        case AE_CHARGE:
+          if (expr->leaf.value < 0)
+            negcharge.push_back(sign * -expr->leaf.value);
+          else
+            poscharge.push_back(sign * expr->leaf.value);
+          break;
+        case AE_ELEM:
+          elem.push_back(sign * expr->leaf.value);
+          break;
+        case AE_ALIPHELEM:
+          aliphelem.push_back(sign * expr->leaf.value);
+          break;
+        case AE_AROMELEM:
+          aromelem.push_back(sign * expr->leaf.value);
+          break;
+        case AE_MASS:
+          isotope.push_back(sign * expr->leaf.value);
+          break;
+        default:
+          break;
+      }
+    }
+    
+    MockAtom(const std::string &smarts)
+    {
+      OpenBabelSmartsMatcher matcher;
+      sp.Init(smarts);
+      Pattern *pat = matcher.GetPattern();
+      for (int i = 0; i < pat->acount; ++i)
+        SetProperties(pat->atom[i]->expr);
+    }
+
+    int aromatic;
+    bool aliphatic;
+    bool cyclic;
+    bool acyclic;
+    std::vector<int> degree;
+    std::vector<int> totalH;
+    std::vector<int> implicitH;
+    std::vector<int> numrings;
+    std::vector<int> ringsize;
+    std::vector<int> valence;
+    std::vector<int> connect;
+    std::vector<int> ringconnect;
+    std::vector<int> poscharge;
+    std::vector<int> negcharge;
+    std::vector<int> elem;
+    std::vector<int> aromelem;
+    std::vector<int> aliphelem;
+    std::vector<int> isotope;
+  };
+
+
+  class MockToolkit : public Toolkit
   {
     public:
       std::string AtomArgType(enum SmartsCompiler::Language lang);
@@ -47,6 +145,7 @@ namespace SC {
   /**
    * Iterators
    */
+  /*
   template<typename OBIter> struct obiter_traits;
   template<> struct obiter_traits<OpenBabel::OBMolAtomIter>
   {
@@ -143,10 +242,12 @@ namespace SC {
   {
     return atom.EndBonds();
   }
+  */
 
   /**
    * CallEvalExpr
    */
+  /*
   template<>
   bool SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>::CallEvalAtomExpr(int index, OpenBabel::OBAtom *atom) const
   {
@@ -181,6 +282,7 @@ namespace SC {
 #endif
 
   typedef SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> OpenBabelSmartsPattern;
+  */
 
 }
 

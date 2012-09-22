@@ -41,6 +41,15 @@ if(PYTHON_BINDINGS)
 endif()
 
 
+set(libsmartscompiler_hdrs
+    src/openbabel.h
+    src/smartscompiler.h
+    src/smartsmatcher.h
+    src/smartsoptimizer.h
+    src/smartspattern.h
+    src/smartsprint.h
+    src/smartsscores.h
+  )
 
 set(libsmartscompiler_srcs
     src/openbabel.cpp
@@ -69,7 +78,7 @@ if(SWIG_FOUND)
         COMMAND ${SWIG_EXECUTABLE} -python -c++ -small -O -templatereduce -naturalvar
         -I${OPENBABEL2_INCLUDE_DIR} -I${CMAKE_SOURCE_DIR} -o ${CMAKE_SOURCE_DIR}/src/smartscompiler_wrap.cpp
         -outdir ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/smartscompiler.i
-        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/src/smartscompiler.i VERBATIM)
+        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/src/smartscompiler.i ${libsmartscompiler_hdrs} VERBATIM)
   
   add_library(bindings_python MODULE ${CMAKE_SOURCE_DIR}/src/smartscompiler_wrap.cpp)
   target_link_libraries(bindings_python ${PYTHON_LIBRARIES} smartscompiler)

@@ -28,8 +28,11 @@ namespace SC {
       SmartsCompiler(Toolkit *toolkit, enum Language language = Cpp);
       ~SmartsCompiler();
 
-      void StartSmartsModule(const std::string &name, std::ostream &os);
-      void GeneratePatternCode(std::ostream &os, const std::string &smarts, OpenBabel::Pattern *pattern);
+      void StartSmartsModule(const std::string &name,bool noInline = false, 
+          bool noSwitch = false, bool noMatch = false, bool optimizeFunctioNames = false);
+      void GeneratePatternCode(const std::string &smarts, OpenBabel::Pattern *pattern,
+          const std::string &function = std::string(), bool nomap = false, 
+          bool count = false, bool atom = false);
       void StopSmartsModule(std::ostream &os);
 
     private:

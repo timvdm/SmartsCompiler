@@ -9,11 +9,6 @@
 #include <Python.h>
 #endif
 
-namespace OpenBabel {
-  class OBAtom;
-  class OBBond;
-}
-
 namespace SC {
 
   enum SmartsExprType
@@ -129,24 +124,28 @@ namespace SC {
     bool grow;
   };
  
+  template<typename AtomType, typename BondType>
   struct SmartsPattern
   {
-    bool CallEvalExpr(int index, OpenBabel::OBAtom *atom) const;
-    bool CallEvalExpr(int index, OpenBabel::OBBond *bond) const;
+    bool CallEvalAtomExpr(int index, AtomType *atom) const;
+    bool CallEvalBondExpr(int index, BondType *bond) const;
+
 
     int numAtoms;
     std::vector<SmartsBond> bonds;
     bool ischiral;
 
-    bool (*EvalAtomExpr)(int, OpenBabel::OBAtom*);
-    bool (*EvalBondExpr)(int, OpenBabel::OBBond*);
+    bool (*EvalAtomExpr)(int, AtomType*);
+    bool (*EvalBondExpr)(int, BondType*);
   };
 
 #if defined(HAVE_PYTHON) || defined(SWIG)
   struct PythonSmartsPattern
   {
-    bool CallEvalExpr(int index, OpenBabel::OBAtom *atom) const;
-    bool CallEvalExpr(int index, OpenBabel::OBBond *bond) const;
+    template<typename AtomType>
+    bool CallEvalAtomExpr(int index, AtomType *atom) const;
+    template<typename BondType>
+    bool CallEvalBondExpr(int index, BondType *bond) const;
 
     int numAtoms;
     std::vector<SmartsBond> bonds;

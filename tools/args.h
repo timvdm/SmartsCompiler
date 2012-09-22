@@ -21,7 +21,11 @@ class ParseArgs
   public:
     static std::vector<std::string> Args(const std::string &str1, const std::string &str2 = std::string(),
        const std::string &str3 = std::string(), const std::string &str4 = std::string(),
-       const std::string &str5 = std::string(), const std::string &str6 = std::string())
+       const std::string &str5 = std::string(), const std::string &str6 = std::string(),
+       const std::string &str7 = std::string(), const std::string &str8 = std::string(),
+       const std::string &str9 = std::string(), const std::string &str10 = std::string(),
+       const std::string &str11 = std::string(), const std::string &str12 = std::string(),
+       const std::string &str13 = std::string(), const std::string &str14 = std::string())
     {
       std::vector<std::string> result(1, str1);
       if (!str2.empty()) result.push_back(str2);
@@ -29,6 +33,14 @@ class ParseArgs
       if (!str4.empty()) result.push_back(str4);
       if (!str5.empty()) result.push_back(str5);
       if (!str6.empty()) result.push_back(str6);
+      if (!str7.empty()) result.push_back(str7);
+      if (!str8.empty()) result.push_back(str8);
+      if (!str9.empty()) result.push_back(str9);
+      if (!str10.empty()) result.push_back(str10);
+      if (!str11.empty()) result.push_back(str11);
+      if (!str12.empty()) result.push_back(str12);
+      if (!str13.empty()) result.push_back(str13);
+      if (!str14.empty()) result.push_back(str14);
       return result;
     }
 
