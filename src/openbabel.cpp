@@ -4,6 +4,16 @@
 
 namespace SC {
 
+  std::string OpenBabelToolkit::AtomType(enum SmartsCompiler::Language lang)
+  {
+    return "OBAtom";
+  }
+
+  std::string OpenBabelToolkit::BondType(enum SmartsCompiler::Language lang)
+  {
+    return "OBBond";
+  }
+
   std::string OpenBabelToolkit::AtomArgType(enum SmartsCompiler::Language lang)
   {
     switch (lang) {
@@ -32,7 +42,7 @@ namespace SC {
   {
     switch (lang) {
       case SmartsCompiler::Cpp:
-        return "atom->IsAtomatic()";
+        return "atom->IsAromatic()";
       case SmartsCompiler::Python:
         return "atom.IsAromatic()";
       default:
@@ -44,7 +54,7 @@ namespace SC {
   {
     switch (lang) {
       case SmartsCompiler::Cpp:
-        return "!atom->IsAtomatic()";
+        return "!atom->IsAromatic()";
       case SmartsCompiler::Python:
         return "not atom.IsAromatic()";
       default:

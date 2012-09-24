@@ -12,6 +12,9 @@ namespace SC {
       {
       }
 
+      virtual std::string AtomType(enum SmartsCompiler::Language lang) = 0;
+      virtual std::string BondType(enum SmartsCompiler::Language lang) = 0;
+
       virtual std::string AtomArgType(enum SmartsCompiler::Language lang) = 0;
       virtual std::string BondArgType(enum SmartsCompiler::Language lang) = 0;
 

@@ -1623,6 +1623,8 @@ namespace SC {
     
     std::string GenerateOrSwitchFunction(std::ostream &os, AtomExpr *expr)
     {
+      return ""; // DISABLED for now until I finsish this...
+
       if (m_noswitch)
         return "";
       // find all ORs
@@ -1879,6 +1881,8 @@ namespace SC {
     
     std::string GenerateLowAndSwitchFunction(std::ostream &os, AtomExpr *expr)
     {
+      return ""; // DISABLED for now until I finsish this...
+
       if (m_noswitch)
         return "";
       // find all ANDs
@@ -2150,7 +2154,8 @@ namespace SC {
     {
       switch (m_language) {
         case SmartsCompiler::Cpp:
-          os << "SmartsPattern* GetSmartsPattern(int index)" << std::endl;
+          os << "SmartsPattern<" << m_toolkit->AtomType(m_language) << ", "
+             << m_toolkit->BondType(m_language) << ">* GetSmartsPattern(int index)" << std::endl;
           os << "{" << std::endl;
           if (m_smarts.size() != m_singleatoms.size()) {
             os << "  switch (index) {" << std::endl;
@@ -2159,7 +2164,8 @@ namespace SC {
                 continue;
               os << "    case " << i << ":" << std::endl;
               os << "      {" << std::endl;
-              os << "        SmartsPattern *pattern = new SmartsPattern;" << std::endl;
+              os << "        SmartsPattern<" << m_toolkit->AtomType(m_language) << ", "
+                 << m_toolkit->BondType(m_language) << "> *pattern = new SmartsPattern;" << std::endl;
               os << "        pattern->numAtoms = " << m_patterns[i].numAtoms << ";" << std::endl;
               os << "        pattern->ischiral = " << m_patterns[i].ischiral << ";" << std::endl;
               for (int j = 0; j < m_patterns[i].bonds.size(); ++j)
@@ -2227,8 +2233,9 @@ namespace SC {
             os << "    }" << std::endl;
             os << "  }" << std::endl;
           }
-          os << "  SmartsMatcher matcher;" << std::endl;
-          os << "  SmartsPattern *pat = GetSmartsPattern(index);" << std::endl;
+          os << "  SmartsMatcher<> matcher;" << std::endl;
+          os << "  SmartsPattern<" << m_toolkit->AtomType(m_language) << ", " 
+             << m_toolkit->BondType(m_language) << "> *pat = GetSmartsPattern(index);" << std::endl;
           os << "  bool result = matcher.Match(mol, pat, mapping);" << std::endl;
           os << "  delete pat;" << std::endl;
           os << "  return result;" << std::endl;

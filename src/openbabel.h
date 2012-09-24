@@ -11,6 +11,8 @@ namespace SC {
   class OpenBabelToolkit : public Toolkit
   {
     public:
+      std::string AtomType(enum SmartsCompiler::Language lang);
+      std::string BondType(enum SmartsCompiler::Language lang);
       std::string AtomArgType(enum SmartsCompiler::Language lang);
       std::string BondArgType(enum SmartsCompiler::Language lang);
       std::string AromaticAtomTemplate(enum SmartsCompiler::Language lang);
