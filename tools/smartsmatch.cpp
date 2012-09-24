@@ -4,27 +4,29 @@
 #include "../src/smartscompiler.h"
 #include "../src/smartsprint.h"
 
+#include "args.h"
+
 #include <openbabel/obconversion.h>
 
 using namespace SC;
 
-ListSmartsScores scores("emolecules-2012-03-01.smarts_scores");
-
-
 int main(int argc, char**argv)
 {
   if (argc < 2) {
-    std::cout << "Usage: " << argv[0] << " [-Ox] <smarts_file> <molecule_file>" << std::endl;
+    std::cout << "Usage: " << argv[0] << " [options] <smarts_file> <molecule_file>" << std::endl;
+    std::cerr << "Options:" << std::endl;
+    std::cerr << "  -anti                Anti-optimize SMARTS" << std::endl;
+    std::cerr << "  -scores <file>       Scores file (default is pretty scores)" << std::endl;
+    PrintOptimizationOptions();
     return 0;
   }
 
-  bool anti = std::string(argv[1]) == "-anti" ? true : false;
-  std::string smartsFile = anti ? argv[2] : argv[1];
-  std::string molFile = anti ? argv[3] : argv[2];
+  ParseArgs args(argc, argv, ParseArgs::Args("-anti", "-anti", "-scores(file)"), ParseArgs::Args("smarts_file", "molecule_file"));
+  SmartsScores *scores = args.IsArg("-scores") ? static_cast<SmartsScores*>(new ListSmartsScores(args.GetArgString("-scores", 0))) : static_cast<SmartsScores*>(new PrettySmartsScores);
+  bool anti = args.IsArg("-anti");
 
-  std::cout << "anti: " << anti << std::endl;
-  std::cout << "smarts file: " << smartsFile << std::endl;
-  std::cout << "molecule file: " << molFile << std::endl;
+  std::string smartsFile = args.GetArgString("smarts_file");
+  std::string molFile = args.GetArgString("mol_file");
 
   std::ifstream ifs(smartsFile.c_str());
  
@@ -45,7 +47,7 @@ int main(int argc, char**argv)
       continue;
     OpenBabel::Pattern *pattern = matcher.GetPattern();
 
-    SmartsOptimizer optimizer(&scores);
+    SmartsOptimizer optimizer(scores);
     optimizer.Optimize(pattern);
 
     std::ifstream mol_ifs(molFile.c_str());
