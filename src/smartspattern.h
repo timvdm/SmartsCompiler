@@ -139,23 +139,6 @@ namespace SC {
     bool (*EvalBondExpr)(int, BondType*);
   };
 
-#if defined(HAVE_PYTHON) || defined(SWIG)
-  struct PythonSmartsPattern
-  {
-    template<typename AtomType>
-    bool CallEvalAtomExpr(int index, AtomType *atom) const;
-    template<typename BondType>
-    bool CallEvalBondExpr(int index, BondType *bond) const;
-
-    int numAtoms;
-    std::vector<SmartsBond> bonds;
-    bool ischiral;
-
-    PyObject *EvalAtomExpr;
-    PyObject *EvalBondExpr;
-  };
-#endif
- 
 }
 
 #endif

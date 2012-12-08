@@ -1,0 +1,221 @@
+#
+# Switchabes: Primitives with value that is unique (i.e. an atom can't have 2 different values)
+#   D<n>
+#   H<n>
+#   h<n>
+#   R<n>
+#   v<n>
+#   X<n>
+#   -<n> +<n>
+#   #<n>
+#   <n>
+#
+# Not Switchable: 
+#   1) Primitive with value that is not unique (i.e. an atom can have 2 different values)
+#     r<n>
+#   2) Primitives without value
+#     *
+#     a
+#     A
+#     R
+#     R0
+#
+# High precedence and switches:
+#   Not switched:
+#     1) CC   -> same value: redundant -> C
+#     2) C!C  -> same value, one negated: unique -> !*
+#     3) !C!C -> same value, both negated: redundant -> !C
+#     4) CN   -> different value: unique -> !*
+#     5) C!N  -> different value, one negated: redundant -> C
+#   Swicthed:
+#     1) !C!N -> different value, both negated
+#
+# Or switches:
+#   Not switched:
+#     1) C,C   -> same value: redundant -> C
+#     2) C,!C  -> same value, one negated: unique -> *
+#     2) !C,!C -> same value, both negated: redundant -> !C
+#     3) C,!N  -> different value, one negated: redundant -> !N
+#   Swicthed:
+#     1) C,N   -> different value
+#     4) !C,!N -> different value, both negated
+
+#
+# Primitives
+#
+[*]
+[a]
+[A]
+[R]
+[R0]
+[D3]
+[H3]
+[h3]
+[R3]
+[v3]
+[X3]
+[-3]
+[+3]
+[#3]
+[3]
+[r3]
+#
+# High precedence and
+#
+[A!R]                   # ok
+[A!RCC]                 # -> C
+[A!RC!C]                # false
+[A!R!C!C]               # -> !C
+[A!RCN]                 # false
+[A!RC!N]                # -> C
+[A!R!C!N]               # ok
+[A!R!C!N!H2!H3]         # ok
+#
+# Or
+#
+[A,!R,C,C]              # -> C
+[A,!R,C,!C]             # true 
+[A,!R,!C,!C]            # -> !C
+[A,!R,C,N]              # ok
+[A,!R,C,!N]             # -> !N
+[A,!R,!C,!N]            # true
+[A,!R,C,N,H2,H3]        # ok
+
+
+[RA,CX]                 # ok        [no switch in and -> no need for and_i vars, no not switched -> idem]
+[RA,CN]                 # -> RA     [idem, and_2 = false]
+[RA,!C!N]               # ok
+[CR,CX]
+[CR,!CX]
+[!CR,!CX]
+[CR,NX]
+[CR,!NX]
+[!CR,!NX]
+[C,N,O,A,!R0,CR,NX+,!CH,!NDr5]
+[R!C,R!N]
+[A,!C!N]
+[A,!C!N,!O!S]
+[A,!C!X2,!O!X3]
+[A!C!NH2,R!O!SH3]
+[A,CH2,!NH3,!OH4]
+
+[A,R;a,R0]
+[A,R;C,C]
+[A,R;C,!C]
+[A,R;!C,!C]
+[A,R;C,N]
+[A,R;C,!N]
+[A,R;!C,!N]
+[A,C;R,C]
+[A,C;R,!C]
+[A,!C;R,!C]
+[A,C;R,N]
+[A,C;R,!N]
+[A,!C;R,!N]
+
+
+[AR,CX;C,N;!O,!S]
+
+
+
+[AR!R!C!N;A,R;A,R,X1,X2;A,R,X1,X2,H1,H2;C,R;N,R;A,!O;!C!O,!S!P;CR0,NR0,OR0]
+[!0;!1,!#1;!2,!#1;!2,!#1]
+
+#[A,!R,C,N,H2,H3,A!R!C!N!H2!H3]
+
+
+
+
+
+
+
+
+
+
+
+#
+# leaf
+#
+#C                         # leaf
+#[!C]                      # !leaf
+#
+# and(leaf, leaf) [high precedence & ]
+#
+#[CR]                      # and(switchable & not_switchable) [switches with 1 case not generated]
+#[C!R]                     # and(switchable & !not_switchable) [same as above]
+#[CN]                      # and(switchable & switchable) [no switch: same value resolves to false -> !* ]
+#[C!N]                     # and(switchable & !switchable) [no switch: negation is redundant -> C ]
+#[!C!N!O]                  # switch(!switchable)
+#[a!C!N!O]                 # and(not_switchable & switch(!switchable))
+#[!a!C!N!O]                # and(!not_switchable & switch(!switchable))
+#[r6!a!C!N!O]              # and(not_switchable & !not_switchable & switch(!leaf))
+#
+# or(leaf, leaf) [intermidiant precedence , ]
+#
+#[C,R]                     # or(switchable , not_switchable)
+#[C,!R]                    # or(switchable , !not_switchable)
+#[C,N]                     # switch(switchable)
+#[C,!N]                    # or(switchable , !switchable) [no switch: negation makes same type expr redundant ->  !N ]
+#[C,N,R]                   # or(not_switchable , switch(switchable))      [function name -> EvalOrExpr????]
+#[C,!N,R]                  # or(not_switchable , switchable , !switchable) [no switch: see above -> !N,R ]
+#[C,N,!R]                  # or(!not_switchable , switch(switchable))
+#[C,!N,!R]                 # or(!not_switchable , switchable , !switchable) [nos switch: see above -> !N,!R ]
+#[C,N,R,!X]                # or(not_switchable , !not_switchable , switch(switchable))
+#[C,!N,R,!X]               # or(not_switchable , !not_switchable , switchable, !switchable) [no switch: see above -> !N,R,!X ]
+## multiple switches
+#[C,N,H1,H2,R]             # or(not_switchable , switch(switchable) , switch(switchable))
+#[C,N,H1,H2,!R]            # or(!not_switchable , switch(switchable) , switch(switchable))
+#[C,N,H1,H2,R,!X]          # or(not_switchable , !not_switchable , switch(switchable) , switch(switchable))
+#
+# or(leaf, and(leaf, leaf)) [high precedence and]
+#
+#[r5X,Nr6]                  # or(and(not_switchable & not_switchable) , and(not_switchable & not_switchable))
+#[r5X,N!r6]                 # or(and(not_switchable & not_switchable) , and(not_switchable & !not_switchable))
+#[a,r5X,N!r6]               # or(not_switchable , and(not_switchable & not_switchable) , and(not_switchable & not_switchable))
+#[!a,r5X,N!r6]              # or(!not_switchable , and(not_switchable & not_switchable) , and(not_switchable & not_switchable))
+#[r5C,Nr6]                  # or(and(not_switchable, not_switchable), and(not_switchable, not_switchable))
+#[r5C,N!r6]                 # or(and(not_switchable, not_switchable), and(not_switchable, !not_switchable))
+#[a,r5C,N!r6]               # or(not_switchable, and(not_switchable, not_switchable), and(not_switchable, not_switchable))
+#[!a,r5C,N!r6]              # or(!not_switchable, and(not_switchable, not_switchable), and(not_switchable, not_switchable))
+#[C-,N-,H1!-,H2!-,r5-,!X-]  # or(and(not_switchable), and(not_switchable, !not_switchable), and(not_switchable, switch(not_switchable)), and(!not_switchable, switch(not_switchable)))  [second switch??]
+#[C-,N-,H1!-,H2!-,r5r6,!X#8]  # or(and(not_switchable), and(not_switchable, !not_switchable), and(not_switchable, switch(not_switchable)), and(!not_switchable, switch(not_switchable)))  [AND not switched if (expr) return true -> if (!expr) return false??]
+#
+# and(not_switchable, or(not_switchable, and(not_switchable))) [low precedence and]
+#
+#[C,R;X]                   # and(not_switchable, or(not_switchable, not_switchable))
+#[C,!R;X]                  # and(not_switchable, or(not_switchable, !not_switchable))
+#[C,R;!X]                  # and(!not_switchable, or(not_switchable, not_switchable))
+#[C,!R;!X]                 # and(!not_switchable, or(not_switchable, !not_switchable))
+#[C,R;X,D]                 # and(or(not_switchable, not_switchable), or(not_switchable, not_switchable))
+#[C,R;X,D;a]               # and(not_switchable, or(not_switchable, not_switchable), or(not_switchable, not_switchable))
+#[C,R;X,D;!a]              # and(!not_switchable, or(not_switchable, not_switchable), or(not_switchable, not_switchable))
+# switch in same and not_switchable, diffent values [same value is reduendant]
+#[C,N;R,X]                 # and(or(not_switchable, not_switchable), switch(not_switchable)) [or/and_i variables??, or_i = -> return??]
+#[C,!N;R,X]                # and(not_switchable, or(not_switchable, not_switchable)) [does not switch] [C;R,X]
+#[C,N;R,X;a]               # and(not_switchable, and(or(not_switchable, not_switchable), switch(not_switchable)))
+#[C,N;R,!X;a]              # and(not_switchable, and(or(not_switchable, !not_switchable), switch(not_switchable))) [comment "R,X;a" -> "R,X", and_i vars??]
+#[C,!N;R,X;a]              # and(not_switchable, not_switchable, or(not_switchable, not_switchable)) [does not switch] [Ca;R,X]
+#[C,!N;R,!X;a]             # and(not_switchable, !not_switchable, or(not_switchable, !not_switchable)) [does not switch] [Ca;R,!X]
+#[C,N;R,X;!a]              # and(!not_switchable, and(or(not_switchable, not_switchable), switch(not_switchable)))
+#[C,N;R,!X;!a]             # and(!not_switchable, and(or(not_switchable, !not_switchable), switch(not_switchable)))
+#[C,!N;R,X;!a]             # and(!not_switchable, and(or(not_switchable, not_switchable), switch([!]not_switchable)))
+#[C,!N;R,!X;!a]            # and(!not_switchable, and(or(not_switchable, !not_switchable), switch([!]not_switchable)))
+# switch in diffent and not_switchables, different values
+#[C,R;N]                   # and(not_switchable, or(not_switchable, not_switchable)) [does not switch] [RN]
+#[C,R;!N]                  # and(not_switchable, or(not_switchable, !not_switchable)) [does not switch] [R!N]
+#[C,!R;N]                  # and(!not_switchable, or(not_switchable, not_switchable)) [does not switch] [!RN]
+#[C,!R;!N]                 # and(!not_switchable, or(not_switchable, !not_switchable)) [does not switch] [!R!N]
+# switch in different and not_switchables, same value
+#[C,R;C,X]                 # and(or(not_switchable, not_switchable), switch(not_switchable)) [C;R,X] [and_i vars, "C,X" -> "X", "C,R" -> "R"??]
+# mupltiple switches
+#[C,H4;N,H3;O,H2]
+#[C,H4,R,X;N,H3,R,a;O,H2,R,!a]
+#[!0,!#1;!1,!#1;!2,!#1]    # [does not switch] ??
+#
+#
+#
+#
+#
+#
+#
+#

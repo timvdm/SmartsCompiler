@@ -1,7 +1,7 @@
 #ifndef SC_TOOLKIT_H
 #define SC_TOOLKIT_H
 
-#include "smartscompiler.h"
+#include "smartscodegenerator.h"
 
 namespace SC {
 
@@ -12,50 +12,50 @@ namespace SC {
       {
       }
 
-      virtual std::string AtomType(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string BondType(enum SmartsCompiler::Language lang) = 0;
+      virtual std::string AtomType(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string BondType(enum SmartsCodeGenerator::Language lang) = 0;
 
-      virtual std::string AtomArgType(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string BondArgType(enum SmartsCompiler::Language lang) = 0;
+      virtual std::string AtomArgType(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string BondArgType(enum SmartsCodeGenerator::Language lang) = 0;
 
-      virtual std::string AromaticAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string AliphaticAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string CyclicAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string AcyclicAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string MassAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string ElementAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string AliphaticElementAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string AromaticElementAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string HydrogenCountAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string ChargeAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string ConnectAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string DegreeAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string ImplicitAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string NumRingsAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string RingSizeAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string ValenceAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string HybAtomTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string RingConnectAtomTemplate(enum SmartsCompiler::Language lang) = 0;
+      virtual std::string AromaticAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string AliphaticAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string CyclicAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string AcyclicAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string MassAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string ElementAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string AliphaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string AromaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string HydrogenCountAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string ChargeAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string ConnectAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string DegreeAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string ImplicitAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string NumRingsAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string RingSizeAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string ValenceAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string HybAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string RingConnectAtomTemplate(enum SmartsCodeGenerator::Language lang) = 0;
 
       virtual bool IsSwitchable(int atomExprType)
       {
         return false;
       }
-      virtual std::string GetSwitchExpr(enum SmartsCompiler::Language lang, int atomExprType)
+      virtual std::string GetSwitchExpr(enum SmartsCodeGenerator::Language lang, int atomExprType)
       {
         return "";
       }
-      virtual std::string GetSwitchPredicate(enum SmartsCompiler::Language lang, int atomExprType)
+      virtual std::string GetSwitchPredicate(enum SmartsCodeGenerator::Language lang, int atomExprType)
       {
         return "";
       }
 
-      virtual std::string DefaultBondTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string SingleBondTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string DoubleBondTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string TripleBondTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string AromaticBondTemplate(enum SmartsCompiler::Language lang) = 0;
-      virtual std::string RingBondTemplate(enum SmartsCompiler::Language lang) = 0;
+      virtual std::string DefaultBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string SingleBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string DoubleBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string TripleBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string AromaticBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
+      virtual std::string RingBondTemplate(enum SmartsCodeGenerator::Language lang) = 0;
   };
 
   template<typename MolType>

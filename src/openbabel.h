@@ -11,39 +11,39 @@ namespace SC {
   class OpenBabelToolkit : public Toolkit
   {
     public:
-      std::string AtomType(enum SmartsCompiler::Language lang);
-      std::string BondType(enum SmartsCompiler::Language lang);
-      std::string AtomArgType(enum SmartsCompiler::Language lang);
-      std::string BondArgType(enum SmartsCompiler::Language lang);
-      std::string AromaticAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string AliphaticAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string CyclicAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string AcyclicAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string MassAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string ElementAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string AliphaticElementAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string AromaticElementAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string HydrogenCountAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string ChargeAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string ConnectAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string DegreeAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string ImplicitAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string NumRingsAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string RingSizeAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string ValenceAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string HybAtomTemplate(enum SmartsCompiler::Language lang);
-      std::string RingConnectAtomTemplate(enum SmartsCompiler::Language lang);
+      std::string AtomType(enum SmartsCodeGenerator::Language lang);
+      std::string BondType(enum SmartsCodeGenerator::Language lang);
+      std::string AtomArgType(enum SmartsCodeGenerator::Language lang);
+      std::string BondArgType(enum SmartsCodeGenerator::Language lang);
+      std::string AromaticAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string AliphaticAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string CyclicAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string AcyclicAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string MassAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string ElementAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string AliphaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string AromaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string HydrogenCountAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string ChargeAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string ConnectAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string DegreeAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string ImplicitAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string NumRingsAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string RingSizeAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string ValenceAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string HybAtomTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string RingConnectAtomTemplate(enum SmartsCodeGenerator::Language lang);
 
       bool IsSwitchable(int atomExprType);
-      std::string GetSwitchExpr(enum SmartsCompiler::Language lang, int atomExprType);
-      std::string GetSwitchPredicate(enum SmartsCompiler::Language lang, int atomExprType);
+      std::string GetSwitchExpr(enum SmartsCodeGenerator::Language lang, int atomExprType);
+      std::string GetSwitchPredicate(enum SmartsCodeGenerator::Language lang, int atomExprType);
 
-      std::string DefaultBondTemplate(enum SmartsCompiler::Language lang);
-      std::string SingleBondTemplate(enum SmartsCompiler::Language lang);
-      std::string DoubleBondTemplate(enum SmartsCompiler::Language lang);
-      std::string TripleBondTemplate(enum SmartsCompiler::Language lang);
-      std::string AromaticBondTemplate(enum SmartsCompiler::Language lang);
-      std::string RingBondTemplate(enum SmartsCompiler::Language lang);
+      std::string DefaultBondTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string SingleBondTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string DoubleBondTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string TripleBondTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string AromaticBondTemplate(enum SmartsCodeGenerator::Language lang);
+      std::string RingBondTemplate(enum SmartsCodeGenerator::Language lang);
   };
 
   /**
@@ -160,6 +160,125 @@ namespace SC {
   {
     return EvalBondExpr(index, bond);
   }
+
+  /**
+   * OpenBabel Atom
+   */
+  class OpenBabelAtom
+  {
+    public:
+      OpenBabelAtom(OpenBabel::OBAtom *atom) : m_atom(atom)
+      {
+      }
+
+      bool isAromatic() const
+      {
+        return m_atom->IsAromatic();
+      }
+
+      bool isAliphatic() const
+      {
+        return !isAromatic();
+      }
+
+      bool isCyclic() const
+      {
+        return m_atom->IsInRing();
+      }
+
+      bool isAcyclic() const
+      {
+        return !m_atom->IsInRing();
+      }
+
+      int element() const
+      {
+        return m_atom->GetAtomicNum();
+      }
+
+      int mass() const
+      {
+        return m_atom->GetIsotope();
+      }
+
+      int degree() const
+      {
+        return m_atom->GetValence();
+      }
+
+      int valence() const
+      {
+        return m_atom->KBOSum() - (m_atom->GetSpinMultiplicity() ? m_atom->GetSpinMultiplicity() - 1 : 0);
+      }
+
+      int connectivity() const
+      {
+        return m_atom->GetImplicitValence();
+      }
+
+      int totalHydrogens() const
+      {
+        return m_atom->ExplicitHydrogenCount() + m_atom->ImplicitHydrogenCount();
+      }
+
+      int implicitHydrogens() const
+      {
+        return m_atom->ImplicitHydrogenCount();
+      }
+
+      int ringMembership() const
+      {
+        return m_atom->MemberOfRingCount();
+      }
+
+      bool isInRingSize(int size) const
+      {
+        return m_atom->IsInRingSize(size);
+      }
+
+      int ringConnectivity() const
+      {
+        return m_atom->CountRingBonds();
+      }
+
+      int charge() const
+      {
+        return m_atom->GetFormalCharge();
+      }
+
+      int atomClass() const
+      {
+        return 0;
+      }
+
+    private:
+      OpenBabel::OBAtom *m_atom;
+  };
+
+  /**
+   * OpenBabel Bond
+   */
+  class OpenBabelBond
+  {
+    public:
+      OpenBabelBond(OpenBabel::OBBond *bond) : m_bond(bond)
+      {
+      }
+
+      bool isAromatic() const
+      {
+        return m_bond->IsAromatic();
+      }
+
+      int order() const
+      {
+        return m_bond->GetBO();
+      }
+
+    private:
+      OpenBabel::OBBond *m_bond;
+  };
+
 
 #ifdef HAVE_PYTHON
   template<>

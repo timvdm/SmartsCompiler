@@ -98,7 +98,7 @@ namespace SC {
   template<typename Expr>
   bool AreTypes(Expr *left, Expr *right, int type1, int type2)
   {
-    return left->type == type1 && right->type == type2 || left->type == type2 && right->type == type1;
+    return (left->type == type1 && right->type == type2) || (left->type == type2 && right->type == type1);
   }
 
   template<typename Expr>
@@ -184,7 +184,9 @@ namespace SC {
         return left->leaf.value == right->leaf.value;
       return true;
     }
+    return false;
   }
+
   inline bool IsDuplicate(BondExpr *left, BondExpr *right)
   {
     if (left->type != right->type)
@@ -195,6 +197,7 @@ namespace SC {
     }
     if (IsLeaf(left))
       return true;
+    return false;
   }
 
   template<typename Expr>

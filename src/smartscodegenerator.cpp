@@ -1,4 +1,4 @@
-#include "smartscompiler.h"
+#include "smartscodegenerator.h"
 #include "smartspattern.h"
 #include "smartsprint.h"
 #include "util.h"
@@ -25,10 +25,10 @@ namespace SC {
   static const char *python_op_template = "def $function($arg):\n"
                                           "  return $expr\n";
  
-  struct SmartsCompilerPrivate
+  struct SmartsCodeGeneratorPrivate
   {
     Toolkit *m_toolkit;
-    enum SmartsCompiler::Language m_language;
+    enum SmartsCodeGenerator::Language m_language;
     int m_not;
     int m_and;
     int m_or;
@@ -47,7 +47,7 @@ namespace SC {
     bool m_nomatch;
     bool m_optfunc;
 
-    SmartsCompilerPrivate(Toolkit *toolkit, enum SmartsCompiler::Language language)
+    SmartsCodeGeneratorPrivate(Toolkit *toolkit, enum SmartsCodeGenerator::Language language)
         : m_toolkit(toolkit), m_language(language), m_and(0), m_or(0), m_not(0),
         m_switch(0), m_noinline(false), m_noswitch(false), m_optfunc(false)
     {
@@ -56,9 +56,9 @@ namespace SC {
     std::string CommentString()
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           return "// ";
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           return "# ";
       }
     }
@@ -66,9 +66,9 @@ namespace SC {
     std::string UnaryNotString()
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           return "!";
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           return "not ";
         default:
           return "";
@@ -78,9 +78,9 @@ namespace SC {
     std::string BinaryAndString()
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           return " && ";
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           return " and ";
         default:
           return "";
@@ -90,9 +90,9 @@ namespace SC {
     std::string BinaryOrString()
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           return " || ";
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           return " or ";
         default:
           return "";
@@ -304,15 +304,14 @@ namespace SC {
       return code;
     }
 
-    std::string FunctionTemplate(const std::string &function, enum SmartsCompiler::ArgType arg, const std::string &expr, bool isOp)
+    std::string FunctionTemplate(const std::string &function, enum SmartsCodeGenerator::ArgType arg, const std::string &expr, bool isOp)
     {
       std::string temp;
-      cpp_template : python_template;
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           temp = cpp_template;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           if (isOp)
             temp = python_op_template;
           else
@@ -324,16 +323,16 @@ namespace SC {
 
       replace_all(temp, "$function", function);
 
-      std::string arg_name = arg == SmartsCompiler::AtomArg ? "atom" : "bond";
-      std::string arg_type = arg == SmartsCompiler::AtomArg ? m_toolkit->AtomArgType(m_language) : m_toolkit->BondArgType(m_language);
+      std::string arg_name = arg == SmartsCodeGenerator::AtomArg ? "atom" : "bond";
+      std::string arg_type = arg == SmartsCodeGenerator::AtomArg ? m_toolkit->AtomArgType(m_language) : m_toolkit->BondArgType(m_language);
       if (arg_type.size())
         arg_type = make_string(arg_type, " ", arg_name);
       else
         arg_type = arg_name;
       replace_all(temp, "$arg", arg_type);
 
-      if (m_language == SmartsCompiler::Python) {
-        std::string obj = arg == SmartsCompiler::AtomArg ? "Atom" : "Bond";
+      if (m_language == SmartsCodeGenerator::Python) {
+        std::string obj = arg == SmartsCodeGenerator::AtomArg ? "Atom" : "Bond";
         replace_all(temp, "$obj", obj);
       }
 
@@ -367,7 +366,7 @@ namespace SC {
       if (std::find(m_functions.begin(), m_functions.end(), functionName) != m_functions.end())
         return functionName;
       
-      enum SmartsCompiler::ArgType argType = SameType<AtomExpr, Expr>::result ? SmartsCompiler::AtomArg : SmartsCompiler::BondArg;
+      enum SmartsCodeGenerator::ArgType argType = SameType<AtomExpr, Expr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
       os << CommentString() << GetExprString(expr) << std::endl;
       os << FunctionTemplate(functionName, argType, expr2, false);
       os << std::endl;
@@ -385,8 +384,8 @@ namespace SC {
     template<typename Expr>
     std::string UnaryExprFunction(std::ostream &os, enum UnaryOp op, const Expr *expr)
     {
-      enum SmartsCompiler::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCompiler::AtomArg : SmartsCompiler::BondArg;
-      std::string arg = argType == SmartsCompiler::AtomArg ? "(atom)" : "(bond)";
+      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
+      std::string arg = argType == SmartsCodeGenerator::AtomArg ? "(atom)" : "(bond)";
 
       std::string code = m_noinline ? "" : ExprString(expr);
  
@@ -429,8 +428,8 @@ namespace SC {
     template<typename Expr>
     std::string BinaryExprFunction(std::ostream &os, enum BinaryOp op, const Expr *expr)
     {
-      enum SmartsCompiler::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCompiler::AtomArg : SmartsCompiler::BondArg;
-      std::string arg = argType == SmartsCompiler::AtomArg ? "(atom)" : "(bond)";
+      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
+      std::string arg = argType == SmartsCodeGenerator::AtomArg ? "(atom)" : "(bond)";
       
       std::string lft_expr = m_noinline ? "" : Bracket(ExprString(expr->bin.lft));
       std::string rgt_expr = m_noinline ? "" :  Bracket(ExprString(expr->bin.rgt));
@@ -513,7 +512,9 @@ namespace SC {
           return m_toolkit->HybAtomTemplate(m_language);
         case AE_RINGCONNECT:
           return m_toolkit->RingConnectAtomTemplate(m_language);
-       }
+      }
+
+      return "";
     }
 
     template<typename Expr>
@@ -521,16 +522,16 @@ namespace SC {
     {
       return expr->type == type || (IsNot(expr) && expr->mon.arg->type == type);
     }
-   
 
     void FindSwitchableLeafs(const std::vector<AtomExpr*> &leafs, std::vector<AtomExpr*> &switchable, std::vector<AtomExpr*> &not_switchable)
     {
       for (std::size_t i = 0; i < leafs.size(); ++i)
-        if (IsNot(leafs[i]) && m_toolkit->IsSwitchable(leafs[i]->mon.arg->type) || m_toolkit->IsSwitchable(leafs[i]->type))
+        if ((IsNot(leafs[i]) && m_toolkit->IsSwitchable(leafs[i]->mon.arg->type)) || m_toolkit->IsSwitchable(leafs[i]->type))
           switchable.push_back(leafs[i]);
         else
           not_switchable.push_back(leafs[i]);
     }
+    
     void SortSwitchableByType(const std::vector<AtomExpr*> &switchable, std::map<int, std::vector<AtomExpr*> > &type_to_switchable)
     {
       for (std::size_t i = 0; i < switchable.size(); ++i)
@@ -539,6 +540,7 @@ namespace SC {
         else
           type_to_switchable[switchable[i]->type].push_back(switchable[i]);
     }
+
     void SortSplitSwitchableByType(const std::vector<std::vector<AtomExpr*> > &switchable, std::vector<std::vector<AtomExpr*> > &not_switched,
         std::map<int, std::vector<std::pair<int, AtomExpr*> > > &type_to_switchable)
     {
@@ -566,7 +568,7 @@ namespace SC {
       }
 
       // don't try to switch single leafs
-      for (typename std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = type_to_switchable.begin(); i != type_to_switchable.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = type_to_switchable.begin(); i != type_to_switchable.end(); ++i)
         if (i->second.size() < 2)
           not_switched[i->second[0].first].push_back(i->second[0].second);
     }
@@ -619,7 +621,7 @@ namespace SC {
 
       if (!split) {
         for (std::map<int, std::vector<AtomExpr*> >::iterator i = value_to_switchable.begin(); i != value_to_switchable.end(); ++i)
-          if (value_to_negated_switchable.find(i->first) != value_to_negated_switchable.end())
+          if (value_to_negated_switchable.find(i->first) != value_to_negated_switchable.end()) {
             if (binaryOp == BinaryAnd) {
               // C!C -> false
               os << "  return false;" << std::endl;
@@ -629,6 +631,7 @@ namespace SC {
               os << "  return true;" << std::endl;
               return;            
             }
+          }
         if (binaryOp == BinaryAnd && value_to_switchable.size() > 1) {
           // CN -> false
           os << "  return false;" << std::endl;
@@ -855,7 +858,7 @@ namespace SC {
       // generate all switch statements
       std::stringstream code;
       std::string op = insideOr ? "," : "&";
-      for (typename std::map<int, std::vector<AtomExpr*> >::iterator i = switchable_types.begin(); i != switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<AtomExpr*> >::iterator i = switchable_types.begin(); i != switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             not_switched.push_back(i->second[j]);
@@ -1066,7 +1069,7 @@ namespace SC {
 
       // generate all switch statements
       std::stringstream or_code;
-      for (typename std::map<int, std::vector<AtomExpr*> >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<AtomExpr*> >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             or_not_switched.push_back(i->second[j]);
@@ -1108,13 +1111,13 @@ namespace SC {
 
       // sort switchable types by size
       std::vector<std::pair<int, int> > and_switchable_sizes; // [(type, and_switchable_types size)]
-      for (typename std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
         and_switchable_sizes.push_back(std::make_pair(i->first, i->second.size()));
       std::sort(and_switchable_sizes.begin(), and_switchable_sizes.end(), SortPairs<int, int, PairSecond, std::greater>());
     
       // create mapping from expr pointer to and index
       std::map<AtomExpr*, int> expr_to_and_index; // expr -> and index
-      for (typename std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
         for (std::size_t j = 0; j < i->second.size(); ++j)
           expr_to_and_index[i->second[j].second] = i->second[j].first;
 
@@ -1661,7 +1664,7 @@ namespace SC {
 
       // generate all switch statements
       std::stringstream and_code;
-      for (typename std::map<int, std::vector<AtomExpr*> >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<AtomExpr*> >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             and_not_switched.push_back(i->second[j]);
@@ -1717,7 +1720,7 @@ namespace SC {
       SortSplitSwitchableByType(or_switchable, or_not_switched, or_switchable_types);
 
       std::vector<std::pair<int, int> > or_switchable_sizes; // [(type, or_switchable_types_size)]
-      for (typename std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i)
         or_switchable_sizes.push_back(std::make_pair(i->first, i->second.size()));
       std::sort(or_switchable_sizes.begin(), or_switchable_sizes.end(), SortPairs<int, int, PairSecond, std::greater>());
       
@@ -1982,6 +1985,8 @@ namespace SC {
         default:
           return ExprFunction(os, "EvalTrueExpr", "true", expr);
       }
+
+      return "";
     }
 
     std::string GenerateExprFunction(std::ostream &os, BondExpr *expr)
@@ -2022,7 +2027,7 @@ namespace SC {
       if (pattern->acount < 2)
         return;
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "bool EvalAtomExpr_" << m_smarts.size() << "(int index, " + m_toolkit->AtomArgType(m_language) + " atom)" << std::endl;
           os << "{" << std::endl;
           os << "  switch (index) {" << std::endl;
@@ -2047,7 +2052,7 @@ namespace SC {
             os << std::endl;
           }
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def EvalAtomExpr_" << m_smarts.size() << "(index, atom):" << std::endl;
           os << "  return { " << 0 << ": " << m_atomEvalExpr[0];
           if (pattern->acount > 1)
@@ -2080,7 +2085,7 @@ namespace SC {
     void GenerateSmartsIndexFunction(std::ostream &os)
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "int SmartsIndex(const std::string &smarts)" << std::endl;
           os << "{" << std::endl;
           for (int i = 0; i < m_smarts.size(); ++i) {
@@ -2092,7 +2097,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def SmartsIndex(smarts):" << std::endl;
           os << "  try:" << std::endl;
           if (m_smarts.size()) {
@@ -2120,7 +2125,7 @@ namespace SC {
         return;
 
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "bool IsSingleAtom(int index)" << std::endl;
           os << "{" << std::endl;
           os << "  switch (index) {" << std::endl;
@@ -2134,7 +2139,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def IsSingleAtom(index):" << std::endl;
           os << "  return index in [ "; 
           bool first = true;
@@ -2153,7 +2158,7 @@ namespace SC {
     void GenerateSmartsPatternFunction(std::ostream &os)
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "SmartsPattern<" << m_toolkit->AtomType(m_language) << ", "
              << m_toolkit->BondType(m_language) << ">* GetSmartsPattern(int index)" << std::endl;
           os << "{" << std::endl;
@@ -2185,7 +2190,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def GetSmartsPattern(index):" << std::endl;
           for (int i = 0; i < m_patterns.size(); ++i) {
             if (m_singleatoms.find(i) != m_singleatoms.end())
@@ -2216,7 +2221,7 @@ namespace SC {
     void GenerateMatchFunction(std::ostream &os)
     {
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "template<typename MappingType>" << std::endl;
           os << "bool Match(OpenBabel::OBMol &mol, const std::string &smarts, MappingType &mapping)" << std::endl;
           os << "{" << std::endl;
@@ -2242,7 +2247,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def Match(molecule, smarts, mapping):" << std::endl;
           os << "  global mol" << std::endl;
           os << "  index = SmartsIndex(smarts)" << std::endl;
@@ -2277,7 +2282,7 @@ namespace SC {
     {
       os << CommentString() << "[" << GetExprString(expr) << "]" << std::endl;
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           os << "template<typename MappingType>" << std::endl;
           os << "bool SingleAtomMatch_" << m_smarts.size() << "(OpenBabel::OBMol &mol, MappingType &mapping)" << std::endl;
           os << "{" << std::endl;
@@ -2292,7 +2297,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:
+        case SmartsCodeGenerator::Python:
           os << "def SingleAtomMatch_" << m_smarts.size() << "(molecule, mapping):" << std::endl;
           os << "  for atom in OBMolAtomIter(molecule):" << std::endl;
           os << "    if " << m_atomEvalExpr[0] << "(atom.GetIdx()):" << std::endl;
@@ -2326,7 +2331,7 @@ namespace SC {
         return;
       }
       switch (m_language) {
-        case SmartsCompiler::Cpp:
+        case SmartsCodeGenerator::Cpp:
           // template<typename>                                      [for !nomap/!count]
           if (!nomap && !count)
             os << "template<typename MappingType>" << std::endl;
@@ -2367,7 +2372,7 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
           break;
-        case SmartsCompiler::Python:      
+        case SmartsCodeGenerator::Python:      
           break;
       }
     }
@@ -2375,16 +2380,16 @@ namespace SC {
   };
 
 
-  SmartsCompiler::SmartsCompiler(Toolkit *toolkit, enum Language language) : d(new SmartsCompilerPrivate(toolkit, language))
+  SmartsCodeGenerator::SmartsCodeGenerator(Toolkit *toolkit, enum Language language) : d(new SmartsCodeGeneratorPrivate(toolkit, language))
   {
   }
 
-  SmartsCompiler::~SmartsCompiler()
+  SmartsCodeGenerator::~SmartsCodeGenerator()
   {
     delete d;
   }
 
-  void SmartsCompiler::StartSmartsModule(const std::string &name, bool noinline, bool noswitch, bool nomatch, bool optfunc)
+  void SmartsCodeGenerator::StartSmartsModule(const std::string &name, bool noinline, bool noswitch, bool nomatch, bool optfunc)
   {
     d->m_noinline = noinline;
     d->m_noswitch = noswitch;
@@ -2411,7 +2416,7 @@ namespace SC {
     }
   }
 
-  void SmartsCompiler::GeneratePatternCode(const std::string &smarts, Pattern *pattern, const std::string &function,
+  void SmartsCodeGenerator::GeneratePatternCode(const std::string &smarts, Pattern *pattern, const std::string &function,
       bool nomap, bool count, bool atom)
   {
     d->m_atomEvalExpr.clear();
@@ -2445,7 +2450,7 @@ namespace SC {
         d->GenerateCustomFunction(d->m_os, function, nomap, count, atom);
   }
 
-  void SmartsCompiler::StopSmartsModule(std::ostream &os)
+  void SmartsCodeGenerator::StopSmartsModule(std::ostream &os)
   {
     if (!d->m_nomatch) {
       d->GenerateSmartsIndexFunction(d->m_os);

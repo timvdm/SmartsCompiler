@@ -538,7 +538,7 @@ namespace SC {
 
       // find opposite type binary expressions in other
       for (std::size_t i = 0; i < other.size(); ++i)
-        if (IsAnd(expr) && IsOr(other[i]) || IsOr(expr) && IsAnd(other[i]))
+        if ((IsAnd(expr) && IsOr(other[i])) || (IsOr(expr) && IsAnd(other[i])))
           opposite.push_back(other[i]);
         else
           not_opposite.push_back(other[i]);

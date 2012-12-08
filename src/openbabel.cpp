@@ -4,322 +4,322 @@
 
 namespace SC {
 
-  std::string OpenBabelToolkit::AtomType(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AtomType(enum SmartsCodeGenerator::Language lang)
   {
     return "OBAtom";
   }
 
-  std::string OpenBabelToolkit::BondType(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::BondType(enum SmartsCodeGenerator::Language lang)
   {
     return "OBBond";
   }
 
-  std::string OpenBabelToolkit::AtomArgType(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AtomArgType(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "OBAtom*";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::BondArgType(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::BondArgType(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "OBBond*";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AromaticAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AromaticAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AliphaticAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AliphaticAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "!atom->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "not atom.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::CyclicAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::CyclicAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->IsInRing()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.IsInRing()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AcyclicAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AcyclicAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "!atom->IsInRing()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "not atom.IsInRing()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::MassAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::MassAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetIsotope() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetIsotope() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::ElementAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::ElementAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetAtomicNum() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetAtomicNum() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AliphaticElementAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AliphaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetAtomicNum() == $value && !atom->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetAtomicNum() == $value and not atom.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AromaticElementAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AromaticElementAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetAtomicNum() == $value && atom->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetAtomicNum() == $value and atom.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::HydrogenCountAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::HydrogenCountAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->ExplicitHydrogenCount() + atom->ImplicitHydrogenCount() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.ExplicitHydrogenCount() + atom.ImplicitHydrogenCount() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::ChargeAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::ChargeAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetFormalCharge() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetFormalCharge() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::ConnectAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::ConnectAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetImplicitValence() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetImplicitValence() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::DegreeAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::DegreeAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetValence() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetValence() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::ImplicitAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::ImplicitAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->ImplicitHydrogenCount() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.ImplicitHydrogenCount() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::NumRingsAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::NumRingsAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->MemberOfRingCount() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.MemberOfRingCount() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::RingSizeAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::RingSizeAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->IsInRingSize($value)";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.IsInRingSize($value)";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::ValenceAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::ValenceAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->KBOSum() - (atom->GetSpinMultiplicity() ? atom->GetSpinMultiplicity() - 1 : 0) == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.KBOSum() - (atom.GetSpinMultiplicity() - 1 if atom.GetSpinMultiplicity() else 0) == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::HybAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::HybAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->GetHyb() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.GetHyb() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::RingConnectAtomTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::RingConnectAtomTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "atom->CountRingBonds() == $value";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "atom.CountRingBonds() == $value";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::DefaultBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::DefaultBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->GetBO() == 1 || bond->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.GetBO() == 1 or bond.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::SingleBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::SingleBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->GetBO() == 1 && !bond->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.GetBO() == 1 and not bond.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::DoubleBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::DoubleBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->GetBO() == 2 && !bond->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.GetBO() == 2 and not bond.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::TripleBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::TripleBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->GetBO() == 3";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.GetBO() == 3";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::AromaticBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::AromaticBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->IsAromatic()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.IsAromatic()";
       default:
         return "";
     }
   }
 
-  std::string OpenBabelToolkit::RingBondTemplate(enum SmartsCompiler::Language lang)
+  std::string OpenBabelToolkit::RingBondTemplate(enum SmartsCodeGenerator::Language lang)
   {
     switch (lang) {
-      case SmartsCompiler::Cpp:
+      case SmartsCodeGenerator::Cpp:
         return "bond->IsInRing()";
-      case SmartsCompiler::Python:
+      case SmartsCodeGenerator::Python:
         return "bond.IsInRing()";
       default:
         return "";
@@ -348,7 +348,7 @@ namespace SC {
     }
   }
 
-  std::string OpenBabelToolkit::GetSwitchExpr(enum SmartsCompiler::Language lang, int atomExprType)
+  std::string OpenBabelToolkit::GetSwitchExpr(enum SmartsCodeGenerator::Language lang, int atomExprType)
   {
     std::string expr;
     switch (atomExprType) {
@@ -396,24 +396,24 @@ namespace SC {
     }
   }
 
-  std::string OpenBabelToolkit::GetSwitchPredicate(enum SmartsCompiler::Language lang, int atomExprType)
+  std::string OpenBabelToolkit::GetSwitchPredicate(enum SmartsCodeGenerator::Language lang, int atomExprType)
   {
     std::string expr;
     switch (atomExprType) {
       case AE_AROMELEM:
         switch (lang) {
-          case SmartsCompiler::Cpp:
+          case SmartsCodeGenerator::Cpp:
             return "atom->IsAromatic()";
-          case SmartsCompiler::Python:
+          case SmartsCodeGenerator::Python:
             return "atom.IsAromatic()";
           default:
             return "";
         }
       case AE_ALIPHELEM:
         switch (lang) {
-          case SmartsCompiler::Cpp:
+          case SmartsCodeGenerator::Cpp:
             return "!atom->IsAromatic()";
-          case SmartsCompiler::Python:
+          case SmartsCodeGenerator::Python:
             return "not atom.IsAromatic()";
           default:
             return "";

@@ -201,9 +201,21 @@ namespace SC {
   */
 
   template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  template<typename PatternType, typename MappingType>
-  void SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::FastSingleMatch(OBMol &mol, PatternType *pat, MappingType &mapping)
+  template<typename MoleculeType, typename PatternType, typename MappingType>
+  void SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::FastSingleMatch(MoleculeType &mol, PatternType *pat, MappingType &mapping)
   {
+
+
+
+
+
+
+
+
+
+
+
+
     OBAtom *atom,*a1,*nbr;
     std::vector<OBAtom*>::iterator i;
 
@@ -285,8 +297,8 @@ namespace SC {
 
 
   template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  template<typename PatternType, typename MappingType>
-  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(OBMol &mol, PatternType *pat, MappingType &mapping)
+  template<typename MoleculeType, typename PatternType, typename MappingType>
+  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(MoleculeType &mol, PatternType *pat, MappingType &mapping)
   {
     ClearMapping(mapping);
     if (!pat || pat->numAtoms == 0)
@@ -301,225 +313,20 @@ namespace SC {
       ssm.Match(mapping);
     }
 
-  /*
-  if (pat->ischiral) {
-    std::vector<std::vector<int> >::iterator m;
-    std::vector<std::vector<int> > tmpmapping;
-
-    tmpmapping.clear();
-    // iterate over the atom mappings
-    for (m = mapping.begin();m != mapping.end();++m) {
-
-      bool allStereoCentersMatch = true;
-
-      // for each pattern atom
-      for (int j = 0; j < pat->numAtoms; ++j) {
-        // skip non-chiral pattern atoms
-        if (!pat->atom[j].chiral_flag)
-          continue;
-        // ignore @? in smarts, parse like any other smarts
-        if (pat->atom[j].chiral_flag == AL_UNSPECIFIED)
-          continue;
-
-        // use the mapping the get the chiral atom in the molecule being queried
-        OBAtom *center = mol.GetAtom((*m)[j]);
-
-        // get the OBTetrahedralStereo::Config from the molecule
-        OBStereoFacade stereo(&mol);
-        OBTetrahedralStereo *ts = stereo.GetTetrahedralStereo(center->GetId());
-        if (!ts || !ts->GetConfig().specified) {
-          // no stereochemistry specified in molecule for the atom
-          // corresponding to the chiral pattern atom using the current
-          // mapping --> no match
-          allStereoCentersMatch = false;
-          break;
-        }
-
-        std::vector<int> nbrs = pat->atom[j].nbrs;
-
-        if (nbrs.size() != 4) { // 3 nbrs currently not supported. Other values are errors.
-          //stringstream ss;
-          //ss << "Ignoring stereochemistry. There are " << nbrs.size() << " connections to this atom instead of 4. Title: " << mol.GetTitle();
-          //obErrorLog.ThrowError(__FUNCTION__, ss.str(), obWarning);
-          continue;
-        }
-
-        // construct a OBTetrahedralStereo::Config using the smarts pattern
-        OBTetrahedralStereo::Config smartsConfig;
-        smartsConfig.center = center->GetId();
-        if (nbrs.at(0) == SmartsImplicitRef)
-          smartsConfig.from = OBStereo::ImplicitRef;
-        else
-          smartsConfig.from = mol.GetAtom( (*m)[nbrs.at(0)] )->GetId();
-        OBStereo::Ref firstref;
-        if (nbrs.at(1) == SmartsImplicitRef)
-          firstref = OBStereo::ImplicitRef;
-        else
-          firstref = mol.GetAtom( (*m)[nbrs.at(1)] )->GetId();
-        OBAtom *ra2 = mol.GetAtom( (*m)[nbrs.at(2)] );
-        OBAtom *ra3 = mol.GetAtom( (*m)[nbrs.at(3)] );
-        smartsConfig.refs = OBStereo::MakeRefs(firstref, ra2->GetId(), ra3->GetId());
-
-        smartsConfig.view = OBStereo::ViewFrom;
-        switch (pat->atom[j].chiral_flag) {
-          case AL_CLOCKWISE:
-            smartsConfig.winding = OBStereo::Clockwise;
-            break;
-          case AL_ANTICLOCKWISE:
-            smartsConfig.winding = OBStereo::AntiClockwise;
-            break;
-          default:
-            smartsConfig.specified = false;
-        }
-
-        // cout << "smarts config = " << smartsConfig << endl;
-        // cout << "molecule config = " << ts->GetConfig() << endl;
-        // cout << "match = " << (ts->GetConfig() == smartsConfig) << endl;
-
-        // and save the match if the two configurations are the same
-        if (ts->GetConfig() != smartsConfig)
-          allStereoCentersMatch = false;
-
-        // don't waste time checking more stereocenters using this mapping if one didn't match
-        if (!allStereoCentersMatch)
-          break;
-      }
-
-      // if all the atoms in the molecule match the stereochemistry specified
-      // in the smarts pattern, save this mapping as a match
-      if (allStereoCentersMatch)
-        tmpmapping.push_back(*m);
-    }
-
-    mapping = tmpmapping;
-  }
-  */
-
     return !EmptyMapping(mapping);
   }
 
-#ifdef HAVE_PYTHON
-
-  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(PyObject *obj, PythonSmartsPattern *pat, PyObject *mapping)
-  {
-    if (!PyObject_HasAttrString(obj, "this")) {
-      std::cout << "SmilesMatch::Match: mol argument is not a SWIG proxy." << std::endl;
-      return false;
-    }
-    PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(obj, "this"));
-    if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
-      std::cout << "SmilesMatch::Match: mol argument has wrong type." << std::endl;
-      return false;
-    }
-
-    if (!PyList_Check(mapping))
-      std::cout << "SmilesMatch::Match: mapping argument is not a python list." << std::endl;
-
-    OBMol *mol = static_cast<OBMol*>(swigObject->ptr);
-
-    std::vector<std::vector<int> > mappings;
-    bool result = Match(*mol, pat, mappings); 
-
-    for (std::size_t i = 0; i < mappings.size(); ++i) {
-      PyObject *list = PyList_New(0);
-      PyList_Append(mapping, list);
-      for (std::size_t j = 0; j < mappings[i].size(); ++j)
-        PyList_Append(list, PyInt_FromLong(mappings[i][j]));
-    }
-
-    return result;
-  }
-
-  template<typename MappingType>
-  bool Match(const std::string &pythonFileOrModuleName, OpenBabel::OBMol &mol, const std::string &smarts, MappingType &mapping)
-  {
-    if (!Py_IsInitialized())
-      Py_Initialize();
-
-    std::string path, moduleName = pythonFileOrModuleName;
-    if (moduleName.find(".py") != std::string::npos)
-      moduleName.resize(moduleName.size() - 3);
-    std::size_t forwardslash = moduleName.rfind("/");
-    if (forwardslash != std::string::npos) {
-      path = moduleName.substr(0, forwardslash);
-      moduleName = moduleName.substr(forwardslash + 1);
-    } else {
-      std::size_t backwardslash = moduleName.rfind("\\");
-      path = moduleName.substr(0, backwardslash);
-      moduleName = moduleName.substr(backwardslash + 1);
-    }
-
-    PyRun_SimpleString("import sys\nsys.path.append('.')");
-    if (path.size())
-      PyRun_SimpleString(make_string("import sys\nsys.path.append('" + path + "')").c_str());
-    PyErr_Print();
-
-    PyObject *module = PyImport_ImportModule(moduleName.c_str());
-    if (!module) {
-      PyErr_Print();
-      return false;
-    }
-
-    if (!PyObject_HasAttrString(module, "mol")) {
-      std::cout << moduleName << " is not a valid SmartsCompiler module (no mol)." << std::endl;
-      return false;
-    }
-
-    PyObject *proxy = PyObject_GetAttrString(module, "mol");
-    if (!PyObject_HasAttrString(proxy, "this")) {
-      std::cout << moduleName << " is not a valid SmartsCompiler module (no mol.this)." << std::endl;
-      return false;
-    }
-
-    PySwigObject *swigObject = reinterpret_cast<PySwigObject*>(PyObject_GetAttrString(proxy, "this"));
-    if (std::string(swigObject->ty->name) != "_p_OpenBabel__OBMol") {
-      std::cout << moduleName << " is not a valid SmartsCompiler module (mol type incorrect)." << std::endl;
-      return false;
-    }
-
-    *static_cast<OBMol*>(swigObject->ptr) = mol;
-
-    if (!PyObject_HasAttrString(module, "MatchGlobalMol")) {
-      std::cout << moduleName << " is not a valid SmartsCompiler module (no MatchGlobalMol)." << std::endl;
-      return false;
-    }
-
-    PyObject *match = PyObject_GetAttrString(module, "MatchGlobalMol");
-    if (!PyFunction_Check(match)) {
-      std::cout << moduleName << " is not a valid SmartsCompiler module (MatchGlobalMol is not a function)." << std::endl;
-      return false;
-    }
-
-    PyObject *pymapping = PyList_New(0);
-    //PyObject *pysmarts = PyString_FromString(smarts.c_str());
-    //PyObject *pysingle = single ? Py_True : Py_False;
-
-    PyObject *result = PyEval_CallFunction(match, "sOb", smarts.c_str(), pymapping, DoSingleMapping<MappingType>::result);
-    PyErr_Print();
-
-    return result == Py_True;
-  }
-
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, SingleVectorMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, SingleVectorMapping &mapping);
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, VectorMappingList>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, VectorMappingList &mapping);
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, NoMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, NoMapping &mapping);
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, SingleMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, SingleMapping &mapping);
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, CountMapping>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, CountMapping &mapping);
-  template bool SmartsMatcher<>::Match<PythonSmartsPattern, MappingList>(OpenBabel::OBMol &mol, PythonSmartsPattern *pat, MappingList &mapping);
-#endif
-
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleVectorMapping>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleVectorMapping>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleVectorMapping &mapping);
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, VectorMappingList>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, VectorMappingList>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, VectorMappingList &mapping);
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, NoMapping>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, NoMapping>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, NoMapping &mapping);
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleMapping>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleMapping>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleMapping &mapping);
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, CountMapping>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, CountMapping>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, CountMapping &mapping);
-  template bool SmartsMatcher<>::Match<SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, MappingList>(OpenBabel::OBMol &mol,
+  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, MappingList>(OpenBabel::OBMol &mol,
       SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, MappingList &mapping);
 
 

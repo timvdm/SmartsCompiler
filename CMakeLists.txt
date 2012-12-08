@@ -43,7 +43,7 @@ endif()
 
 set(libsmartscompiler_hdrs
     src/openbabel.h
-    src/smartscompiler.h
+    src/smartscodegenerator.h
     src/smartsmatcher.h
     src/smartsoptimizer.h
     src/smartspattern.h
@@ -56,7 +56,7 @@ set(libsmartscompiler_srcs
     src/smartsmatcher.cpp
     src/smartsscores.cpp
     src/smartsoptimizer.cpp
-    src/smartscompiler.cpp
+    src/smartscodegenerator.cpp
     src/smartsprint.cpp
 )
 

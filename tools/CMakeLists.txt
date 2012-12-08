@@ -1,8 +1,8 @@
-# the smartscompiler executable
-add_executable(smartscompiler_exe smartscompiler.cpp)
-set_target_properties(smartscompiler_exe PROPERTIES OUTPUT_NAME smartscompiler)
-target_link_libraries(smartscompiler_exe smartscompiler pthread)
-install(TARGETS smartscompiler_exe
+# the smartscodegenerator executable
+add_executable(smartscodegenerator_exe smartscodegenerator.cpp)
+set_target_properties(smartscodegenerator_exe PROPERTIES OUTPUT_NAME smartscodegenerator)
+target_link_libraries(smartscodegenerator_exe smartscompiler pthread)
+install(TARGETS smartscodegenerator_exe
                 RUNTIME DESTINATION bin
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib)
@@ -31,4 +31,10 @@ install(TARGETS smartsscores
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib)
 
-
+# the smartsasm executable
+add_executable(smartsasm smartsasm.cpp)
+target_link_libraries(smartsasm smartscompiler pthread)
+install(TARGETS smartsasm
+                RUNTIME DESTINATION bin
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib)

@@ -7,16 +7,15 @@ namespace SC {
 
   class Toolkit;
 
-  struct SmartsCompilerPrivate;
+  struct SmartsCodeGeneratorPrivate;
 
-  class SmartsCompiler
+  class SmartsCodeGenerator
   {
     public:
       enum Language
       {
         Cpp,
-        Python,
-        Java,
+        Python
       };
 
       enum ArgType
@@ -25,8 +24,8 @@ namespace SC {
         BondArg
       };
 
-      SmartsCompiler(Toolkit *toolkit, enum Language language = Cpp);
-      ~SmartsCompiler();
+      SmartsCodeGenerator(Toolkit *toolkit, enum Language language = Cpp);
+      ~SmartsCodeGenerator();
 
       void StartSmartsModule(const std::string &name,bool noInline = false, 
           bool noSwitch = false, bool noMatch = false, bool optimizeFunctioNames = false);
@@ -36,7 +35,7 @@ namespace SC {
       void StopSmartsModule(std::ostream &os);
 
     private:
-      SmartsCompilerPrivate * const d;
+      SmartsCodeGeneratorPrivate * const d;
   };
 
 }

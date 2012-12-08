@@ -50,8 +50,8 @@ namespace SC {
       };
 
       SmartsOptimizer(SmartsScores *scores) : m_scores(scores)
-    {
-    }
+      {
+      }
 
       void Optimize(OpenBabel::Pattern *pattern, int opts = O5);
 

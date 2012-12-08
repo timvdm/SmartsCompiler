@@ -3,7 +3,10 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 #include <algorithm>
+
+#include <iostream>
 
 namespace SC {
 
@@ -224,20 +227,6 @@ namespace SC {
     return ss.str();
   }
   
-  inline std::vector<std::string> tokenize(const std::string &str, const std::string &delimiter)
-  {
-    std::vector<std::string> tokens;
-    std::size_t currpos = 0, nextpos = 0;
-
-    while ((nextpos = str.find(delimiter, currpos)) != std::string::npos) {
-      tokens.push_back(str.substr(currpos, nextpos - currpos));
-      currpos = nextpos + 1;
-    }
-    tokens.push_back(str.substr(currpos, str.length() - currpos));
-
-    return tokens;
-  }
-
   inline void replace_first(std::string &str, const std::string &what, const std::string &with = std::string())
   {
     std::size_t pos = str.find(what);
@@ -290,6 +279,32 @@ namespace SC {
     T number;
     ss >> number;
     return number;
+  }
+
+  /**
+   * @param repeat The delimiter may be repeated. Only works for single
+   *        character delimiter.
+   */
+  inline std::vector<std::string> tokenize(const std::string &str, const std::string &delimiter, bool repeat = false)
+  {
+    std::vector<std::string> tokens;
+    std::size_t currpos = 0, nextpos = 0;
+    //std::cout << "tokenize: \"" << str << "\"" << std::endl;
+
+    while ((nextpos = str.find(delimiter, currpos)) != std::string::npos) {
+      if (repeat)
+        while (nextpos < str.size() && str[nextpos] == delimiter[0])
+          ++nextpos;
+      if (nextpos == str.size())
+        return tokens;
+      tokens.push_back(str.substr(currpos, nextpos - currpos - 1));
+      //std::cout << "token: \"" << tokens.back() << "\"" << std::endl;
+      currpos = nextpos;
+    }
+    tokens.push_back(str.substr(currpos, str.length() - currpos));
+    //std::cout << "token: \"" << tokens.back() << "\"" << std::endl;
+
+    return tokens;
   }
 
   /**

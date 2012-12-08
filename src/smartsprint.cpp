@@ -63,6 +63,8 @@ namespace SC {
       case AE_RINGCONNECT:
         return "Ring Connectivity";
     }
+
+    return "Unknown";
   }
 
   std::string GetBondExprType(int type)
@@ -95,6 +97,8 @@ namespace SC {
       case BE_DOWN:
         return "Down";
     }
+
+    return "Unknown";
   }
 
   void PrintAtomExprTree(AtomExpr *expr, int indent, SmartsScores *scores)
@@ -396,6 +400,8 @@ namespace SC {
       case AE_RINGCONNECT:
         return expr->leaf.value == 1 ? "x" : make_string("x", expr->leaf.value);
     }
+
+    return "<?>";
   }
  
   template<typename Expr>
@@ -447,6 +453,8 @@ namespace SC {
       case BE_RING:
         return "@";
     }
+
+    return "<?>";
   }
 
   void PrintPattern(Pattern *pattern, SmartsScores *scores)

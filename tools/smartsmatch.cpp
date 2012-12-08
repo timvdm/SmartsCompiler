@@ -1,7 +1,7 @@
 #include "../src/smartsmatcher.h"
 #include "../src/smartsscores.h"
 #include "../src/smartsoptimizer.h"
-#include "../src/smartscompiler.h"
+#include "../src/smartscodegenerator.h"
 #include "../src/smartsprint.h"
 
 #include "args.h"

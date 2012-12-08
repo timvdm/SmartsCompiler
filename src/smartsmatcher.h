@@ -17,7 +17,7 @@ namespace SC {
 
   struct NoMapping
   {
-    enum { single = false };
+    enum { single = true };
     bool match;
   };
 
@@ -55,33 +55,21 @@ namespace SC {
     enum { result = false };
   };
 
-  //! \class OBSmartsMatcher parsmart.h <openbabel/parsmart.h>
-  //! \brief Internal class: performs matching; a wrapper around previous
-  //! C matching code to make it thread safe.
   template<typename MolAtomIterType = OpenBabel::OBAtomIterator, typename MolBondIterType = OpenBabel::OBBondIterator,
            typename AtomAtomIterType = OpenBabel::OBAtomAtomIter, typename AtomBondIterType = OpenBabel::OBBondIterator>
   class SmartsMatcher
   {
     protected:
-      //recursive smarts cache
-      //std::vector<std::pair<const SmartsPattern*, std::vector<bool> > > RSCACHE;
-      // list of fragment patterns (e.g., (*).(*)
-      //std::vector<const OpenBabel::Pattern*> Fragments;
-      //void SetupAtomMatchTable(std::vector<std::vector<bool> > &ttab,
-      //    const OpenBabel::Pattern *pat, OpenBabel::OBMol &mol);
-      template<typename SmartsPatternType, typename MappingType>
-      void FastSingleMatch(OpenBabel::OBMol &mol, SmartsPatternType *pattern, MappingType &mapping);
+      template<typename MoleculeType, typename SmartsPatternType, typename MappingType>
+      void FastSingleMatch(MoleculeType &mol, SmartsPatternType *pattern, MappingType &mapping);
 
     public:
       SmartsMatcher() {}
       virtual ~SmartsMatcher() {}
 
 #ifndef SWIG
-      template<typename SmartsPatternType, typename MappingType>
-      bool Match(OpenBabel::OBMol &mol, SmartsPatternType *pat, MappingType &mapping);
-#endif
-#if defined(HAVE_PYTHON) || defined(SWIG)
-      bool Match(PyObject *mol, PythonSmartsPattern *pat, PyObject *mapping);
+      template<typename MoleculeType, typename SmartsPatternType, typename MappingType>
+      bool Match(MoleculeType &mol, SmartsPatternType *pat, MappingType &mapping);
 #endif
   };
 
@@ -89,19 +77,14 @@ namespace SC {
   {
     public:
       OpenBabelSmartsMatcher() : OpenBabel::OBSmartsPattern()
-    {
-    }
+      {
+      }
 
       OpenBabel::Pattern* GetPattern()
       {
         return _pat;
       }
   };
-
-#ifdef HAVE_PYTHON
-  template<typename MappingType>
-  bool Match(const std::string &pythonFileOrModuleName, OpenBabel::OBMol &mol, const std::string &smarts, MappingType &mapping);
-#endif
 
 }
 

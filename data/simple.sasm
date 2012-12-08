@@ -1,0 +1,206 @@
+is_aromatic:
+
+    arom
+    je return_1
+    ret 0
+
+is_aliphatic:
+
+    aliph
+    je return_1
+    ret 0
+
+is_cyclic:
+
+    cyclic
+    je return_1
+    ret 0
+
+is_acyclic:
+
+    acyclic
+    je return_1
+    ret 0
+
+is_carbon:
+
+    elem 6
+    je return_1
+    ret 0
+
+is_nitrogen:
+    
+    elem 7
+    je return_1
+    ret 0
+
+mass_13:
+
+    mass 13
+    je return_1
+    ret 0
+
+degree_2:
+
+    deg 2
+    je return_1
+    ret 0
+
+degree_3:
+
+    deg 3
+    je return_1
+    ret 0
+
+degree_4:
+
+    deg 4
+    je return_1
+    ret 0
+
+valence_2:
+
+    val 2
+    je return_1
+    ret 0
+
+valence_3:
+
+    val 3
+    je return_1
+    ret 0
+
+valence_4:
+
+    val 4
+    je return_1
+    ret 0
+
+connectivity_2:
+
+    conn 2
+    je return_1
+    ret 0
+
+connectivity_3:
+
+    conn 3
+    je return_1
+    ret 0
+
+connectivity_4:
+
+    conn 4
+    je return_1
+    ret 0
+
+totalh_1:
+
+    totalh 1
+    je return_1
+    ret 0
+
+totalh_2:
+
+    totalh 2
+    je return_1
+    ret 0
+
+totalh_3:
+
+    totalh 3
+    je return_1
+    ret 0
+
+totalh_4:
+
+    totalh 4
+    je return_1
+    ret 0
+
+implh_1:
+
+    implh 1
+    je return_1
+    ret 0
+
+implh_2:
+
+    implh 2
+    je return_1
+    ret 0
+
+implh_3:
+
+    implh 3
+    je return_1
+    ret 0
+
+implh_4:
+
+    implh 4
+    je return_1
+    ret 0
+
+ring_membership_1:
+
+    rmem 1
+    je return_1
+    ret 0
+
+ring_membership_2:
+
+    rmem 2
+    je return_1
+    ret 0
+
+ring_size_5:
+
+    rsize 5
+    je return_1
+    ret 0
+
+ring_size_6:
+
+    rsize 6
+    je return_1
+    ret 0
+
+ring_connectivity_1:
+
+    rconn 1
+    je return_1
+    ret 0
+
+ring_connectivity_2:
+
+    rconn 2
+    je return_1
+    ret 0
+
+ring_connectivity_3:
+
+    rconn 3
+    je return_1
+    ret 0
+
+charge_neg1:
+
+    chg -1
+    je return_1
+    ret 0
+
+charge_0:
+
+    chg 0
+    je return_1
+    ret 0
+
+charge_pos1:
+
+    chg 1
+    je return_1
+    ret 0
+
+return_1:
+    ret 1

@@ -1,0 +1,64 @@
+# [*]
+smarts_1:
+
+  ret 1         # always return true, the atom matches
+
+# [R]
+smarts_2:
+
+  cyclic                # sets TF if atom is cyclic
+  jne return_0          # jump if atomic number is not 6 (TF not set)
+  ret 1                 # return true, the atom matches
+
+# [CH3] = [#6&A&H3]
+smarts_3:
+  
+  elem 6
+  jne return_0          # jump and return false if atomic number is not 6 (TF not set)
+  aliph
+  jne return_0          # jump and return false if atom is not aliphatic
+  totalh 3
+  jne return_0          # jump and return false if atom does not have 3 hydrogens in total
+  ret 1                 # return true, the atom matches
+
+# [C,#7,#8] = [#6&A,#7,#8]
+smarts_4:
+
+  elem 6
+  jne smarts_4_tmp      # jump if atomic number is not 6 (therefore #6&A can't be true)
+  aliph
+  je return_1           # return true if atom is aliphatic (matched #6&6
+smarts_4_tmp:
+  elem 7
+  je return_1           # return true if atomic number is 7
+  elem 8
+  je return_1           # return true if atomic number is 8
+  ret 0                 # return false
+
+# [X4!#6,X3!#7;R]
+smarts_5:
+
+  cyclic
+  jne return_0          # return false if not cyclic
+  conn 4
+  jne smarts_5_tmp      # jump and try to match X3!#7 since X4!#6 does not match
+  elem 6
+  jne return_1          # return true if atomic number is not 6 (matched R&X4&!#6)
+smarts_5_tmp:
+  conn 3
+  jne return_0          # return false (R&X3&!#7 can't be true)
+  elem 7
+  jne return_1          # return true (matched R&X3&!#7)
+  ret 0                 # no match
+  
+  
+# 
+# return instructions for other code to use
+#
+return_0:
+
+  ret 0
+
+return_1:
+
+  ret 1

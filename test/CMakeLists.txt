@@ -3,6 +3,7 @@
 set(tests
   optimizer
   scores
+  assembler
   )
 
 set(TEST_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

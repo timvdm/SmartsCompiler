@@ -1,4 +1,4 @@
-#include "../src/smartscompiler.h"
+#include "../src/smartscodegenerator.h"
 #include "../src/smartsscores.h"
 #include "../src/smartsoptimizer.h"
 #include "../src/openbabel.h"
@@ -36,10 +36,10 @@ int main(int argc, char**argv)
   std::string output_code_file = args.GetArgString("output_code_file");
 
   int opt = GetOptimizationFlags(args);
-  enum SmartsCompiler::Language lang = SmartsCompiler::Cpp;
+  enum SmartsCodeGenerator::Language lang = SmartsCodeGenerator::Cpp;
   
   if (args.IsArg("-python"))
-    lang = SmartsCompiler::Python;
+    lang = SmartsCodeGenerator::Python;
 
   std::string module;
   if (args.IsArg("-module"))
@@ -51,7 +51,7 @@ int main(int argc, char**argv)
 
 
   OpenBabelToolkit toolkit;
-  SmartsCompiler compiler(&toolkit, lang);
+  SmartsCodeGenerator compiler(&toolkit, lang);
   SmartsOptimizer optimizer(scores);
 
   std::ofstream ofs(output_code_file.c_str());
