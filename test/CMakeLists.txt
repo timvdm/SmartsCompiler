@@ -3,14 +3,14 @@
 set(tests
   optimizer
   scores
-  #assembler
+  assembler
   smarts
   )
 
 set(TEST_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
-# define TESTDATADIR for tests that need input files
-add_definitions(-DTESTDATADIR="${CMAKE_BINARY_DIR}/")
+# define DATADIR for tests that need input files
+add_definitions(-DDATADIR="${CMAKE_SOURCE_DIR}/data/")
 
 
 foreach(test ${tests})

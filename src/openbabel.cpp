@@ -1,6 +1,7 @@
 #include "openbabel.h"
 #include "smartsmatcher.h"
 #include "defines.h"
+#include "smiley.h"
 
 namespace SC {
 
@@ -329,19 +330,19 @@ namespace SC {
   bool OpenBabelToolkit::IsSwitchable(int atomExprType)
   {
     switch (atomExprType) {
-      case AE_MASS:
-      case AE_ELEM:
-      case AE_AROMELEM:
-      case AE_ALIPHELEM:
-      case AE_HCOUNT:
-      case AE_CHARGE:
-      case AE_CONNECT:
-      case AE_DEGREE:
-      case AE_IMPLICIT:
-      case AE_RINGS:
-      case AE_VALENCE:
-      case AE_HYB:
-      case AE_RINGCONNECT:
+      case Smiley::AE_Isotope:
+      case Smiley::AE_AtomicNumber:
+      case Smiley::AE_AromaticElement:
+      case Smiley::AE_AliphaticElement:
+      case Smiley::AE_TotalH:
+      case Smiley::AE_Charge:
+      case Smiley::AE_Connectivity:
+      case Smiley::AE_Degree:
+      case Smiley::AE_ImplicitH:
+      case Smiley::AE_RingMembership:
+      case Smiley::AE_Valence:
+      //case Smiley::AE_HYB:
+      case Smiley::AE_RingConnectivity:
         return true;
       default:
         return false;
@@ -352,43 +353,43 @@ namespace SC {
   {
     std::string expr;
     switch (atomExprType) {
-      case AE_MASS:
+      case Smiley::AE_Isotope:
         expr = MassAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_ELEM:
+      case Smiley::AE_AtomicNumber:
         expr = ElementAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_AROMELEM:
+      case Smiley::AE_AromaticElement:
         expr = AromaticElementAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_ALIPHELEM:
+      case Smiley::AE_AliphaticElement:
         expr = AliphaticElementAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_HCOUNT:
+      case Smiley::AE_TotalH:
         expr = HydrogenCountAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_CHARGE:
+      case Smiley::AE_Charge:
         expr = ChargeAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_CONNECT:
+      case Smiley::AE_Connectivity:
         expr = ConnectAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_DEGREE:
+      case Smiley::AE_Degree:
         expr = DegreeAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_IMPLICIT:
+      case Smiley::AE_ImplicitH:
         expr = ImplicitAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_RINGS:
+      case Smiley::AE_RingMembership:
         expr = NumRingsAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_VALENCE:
+      case Smiley::AE_Valence:
         expr = ValenceAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
-      case AE_HYB:
-        expr = HybAtomTemplate(lang);
-        return expr.substr(0, expr.find(" "));
-      case AE_RINGCONNECT:
+      //case Smiley::AE_HYB:
+      //  expr = HybAtomTemplate(lang);
+      //  return expr.substr(0, expr.find(" "));
+      case Smiley::AE_RingConnectivity:
         expr = RingConnectAtomTemplate(lang);
         return expr.substr(0, expr.find(" "));
       default:
@@ -400,7 +401,7 @@ namespace SC {
   {
     std::string expr;
     switch (atomExprType) {
-      case AE_AROMELEM:
+      case Smiley::AE_AromaticElement:
         switch (lang) {
           case SmartsCodeGenerator::Cpp:
             return "atom->IsAromatic()";
@@ -409,7 +410,7 @@ namespace SC {
           default:
             return "";
         }
-      case AE_ALIPHELEM:
+      case Smiley::AE_AliphaticElement:
         switch (lang) {
           case SmartsCodeGenerator::Cpp:
             return "!atom->IsAromatic()";

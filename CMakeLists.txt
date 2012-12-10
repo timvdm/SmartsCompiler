@@ -52,11 +52,11 @@ set(libsmartscompiler_hdrs
   )
 
 set(libsmartscompiler_srcs
-    #    src/openbabel.cpp
-    #    src/smartsmatcher.cpp
+    src/openbabel.cpp
+    #src/smartsmatcher.cpp
     src/smartsscores.cpp
     src/smartsoptimizer.cpp
-    #    src/smartscodegenerator.cpp
+    src/smartscodegenerator.cpp
     src/smartsprint.cpp
     src/smarts.cpp
 )

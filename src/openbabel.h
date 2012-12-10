@@ -106,42 +106,42 @@ namespace SC {
   };
 
   template<>
-  OpenBabel::OBAtomIterator GetBeginAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol) 
+  inline OpenBabel::OBAtomIterator GetBeginAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol) 
   {
     return mol.BeginAtoms();
   }
   template<>
-  OpenBabel::OBAtomIterator GetEndAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol)
+  inline OpenBabel::OBAtomIterator GetEndAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol)
   {
     return mol.EndAtoms();
   }
   template<>
-  OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBMol, OpenBabel::OBBondIterator>(OpenBabel::OBMol &mol) 
+  inline OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBMol, OpenBabel::OBBondIterator>(OpenBabel::OBMol &mol) 
   {
     return mol.BeginBonds();
   }
   template<>
-  OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBMol, OpenBabel::OBBondIterator>(OpenBabel::OBMol &mol)
+  inline OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBMol, OpenBabel::OBBondIterator>(OpenBabel::OBMol &mol)
   {
     return mol.EndBonds();
   }
   template<>
-  OBIter<OpenBabel::OBAtomAtomIter> GetBeginAtoms<OpenBabel::OBAtom, OBIter<OpenBabel::OBAtomAtomIter> >(OpenBabel::OBAtom &atom) 
+  inline OBIter<OpenBabel::OBAtomAtomIter> GetBeginAtoms<OpenBabel::OBAtom, OBIter<OpenBabel::OBAtomAtomIter> >(OpenBabel::OBAtom &atom) 
   {
     return OBIter<OpenBabel::OBAtomAtomIter>(atom);
   }
   template<>
-  OBIter<OpenBabel::OBAtomAtomIter> GetEndAtoms<OpenBabel::OBAtom, OBIter<OpenBabel::OBAtomAtomIter> >(OpenBabel::OBAtom &atom)
+  inline OBIter<OpenBabel::OBAtomAtomIter> GetEndAtoms<OpenBabel::OBAtom, OBIter<OpenBabel::OBAtomAtomIter> >(OpenBabel::OBAtom &atom)
   {
     return OBIter<OpenBabel::OBAtomAtomIter>(atom);
   }
   template<>
-  OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom) 
+  inline OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom) 
   {
     return atom.BeginBonds();
   }
   template<>
-  OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom)
+  inline OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom)
   {
     return atom.EndBonds();
   }
@@ -150,13 +150,13 @@ namespace SC {
    * CallEvalExpr
    */
   template<>
-  bool SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>::CallEvalAtomExpr(int index, OpenBabel::OBAtom *atom) const
+  inline bool SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>::CallEvalAtomExpr(int index, OpenBabel::OBAtom *atom) const
   {
     return EvalAtomExpr(index, atom);
   }
 
   template<>
-  bool SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>::CallEvalBondExpr(int index, OpenBabel::OBBond *bond) const
+  inline bool SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>::CallEvalBondExpr(int index, OpenBabel::OBBond *bond) const
   {
     return EvalBondExpr(index, bond);
   }

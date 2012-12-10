@@ -6,13 +6,15 @@
 #include "pattern.h"
 #include "defines.h"
 
+#include "openbabel.h"
+
 #include <set>
 #include <cassert>
 
 namespace SC {
 
   using namespace OpenBabel;
-  
+
   static const char *cpp_template = "inline bool $function($arg)\n"
                                     "{\n"
                                     "  return $expr;\n"
@@ -108,152 +110,152 @@ namespace SC {
       return code;
     }
 
-    std::string ExprFunctionName(const AtomExpr *expr)
+    std::string ExprFunctionName(const SmartsAtomExpr *expr)
     {
       switch (expr->type) {
-        case AE_NOT:
-          return make_string("Not_", ExprFunctionName(expr->mon.arg));
-        case AE_TRUE:
+        case Smiley::OP_Not:
+          return make_string("Not_", ExprFunctionName(expr->unary.arg));
+        case Smiley::AE_True:
           return "EvalTrueExpr";
-        case AE_FALSE:
+        case Smiley::AE_False:
           return "EvalFalseExpr";
-        case AE_AROMATIC:
+        case Smiley::AE_Aromatic:
           return "EvalAromaticExpr";
-        case AE_ALIPHATIC:
+        case Smiley::AE_Aliphatic:
           return "EvalAliphaticExpr";
-        case AE_CYCLIC:
+        case Smiley::AE_Cyclic:
           return "EvalCyclicExpr";
-        case AE_ACYCLIC:
+        case Smiley::AE_Acyclic:
           return "EvalAcyclicExpr";
-        case AE_MASS:
+        case Smiley::AE_Isotope:
           return make_string("EvalMassExpr_", expr->leaf.value);
-        case AE_ELEM:
+        case Smiley::AE_AtomicNumber:
           return make_string("EvalElementExpr_", expr->leaf.value);
-        case AE_AROMELEM:
+        case Smiley::AE_AromaticElement:
           return make_string("EvalAromaticElementExpr_", expr->leaf.value);
-        case AE_ALIPHELEM:
+        case Smiley::AE_AliphaticElement:
           return make_string("EvalAliphaticElementExpr_", expr->leaf.value);
-        case AE_HCOUNT:
+        case Smiley::AE_TotalH:
           return make_string("EvalHydrogenCountExpr_", expr->leaf.value);
-        case AE_CHARGE:
+        case Smiley::AE_Charge:
           return make_string("EvalChargeExpr_", expr->leaf.value);
-        case AE_CONNECT:
+        case Smiley::AE_Connectivity:
           return make_string("EvalConnectExpr_", expr->leaf.value);
-        case AE_DEGREE:
+        case Smiley::AE_Degree:
           return make_string("EvalDegreeExpr_", expr->leaf.value);
-        case AE_IMPLICIT:
+        case Smiley::AE_ImplicitH:
           return make_string("EvalImplicitExpr_", expr->leaf.value);
-        case AE_RINGS:
+        case Smiley::AE_RingMembership:
           return make_string("EvalRingsExpr_", expr->leaf.value);
-        case AE_SIZE:
+        case Smiley::AE_RingSize:
           return make_string("EvalSizeExpr_", expr->leaf.value);
-        case AE_VALENCE:
+        case Smiley::AE_Valence:
           return make_string("EvalValenceExpr_", expr->leaf.value);
-        case AE_CHIRAL:
+        case Smiley::AE_Chirality:
           return "EvalChiralExpr";
-        case AE_HYB:
-          return make_string("EvalHybridizationExpr_", expr->leaf.value);
-        case AE_RINGCONNECT:
+        //case AE_HYB:
+        //  return make_string("EvalHybridizationExpr_", expr->leaf.value);
+        case Smiley::AE_RingConnectivity:
           return make_string("EvalRingConnectExpr_", expr->leaf.value);
         default:
           return "EvalTrueExpr";
       }
     }
 
-    std::string ExprFunctionName(const BondExpr *expr)
+    std::string ExprFunctionName(const SmartsBondExpr *expr)
     {
       switch (expr->type) {
-        case BE_NOT:
-          return make_string("Not_", ExprFunctionName(expr->mon.arg));
-        case BE_ANY:
+        case Smiley::OP_Not:
+          return make_string("Not_", ExprFunctionName(expr->unary.arg));
+        case Smiley::BE_True:
           return "EvalAnyExpr";
         case BE_DEFAULT:
           return "EvalDefaultExpr";
-        case BE_SINGLE:
+        case Smiley::BE_Single:
           return "EvalSingleExpr";
-        case BE_DOUBLE:
+        case Smiley::BE_Double:
           return "EvalDoubleExpr";
-        case BE_TRIPLE:
+        case Smiley::BE_Triple:
           return "EvalTripleExpr";
-        case BE_AROM:
+        case Smiley::BE_Aromatic:
           return "EvalAromaticExpr";
-        case BE_RING:
+        case Smiley::BE_Ring:
           return "EvalRingExpr";
         default:
           return "EvalAnyExpr";
       }
     }
 
-    std::string ExprString(const AtomExpr *expr)
+    std::string ExprString(const SmartsAtomExpr *expr)
     {
       if (!IsLeaf(expr) && !IsNegatedLeaf(expr))
         return "";
       std::string code;
       switch (expr->type) {
-        case AE_NOT:
-          code = ExprString(expr->mon.arg);
+        case Smiley::OP_Not:
+          code = ExprString(expr->unary.arg);
           break;
-        case AE_TRUE:
+        case Smiley::AE_True:
           code = "true";
           break;
-        case AE_FALSE:
+        case Smiley::AE_False:
           code = "false";
           break;
-        case AE_AROMATIC:
+        case Smiley::AE_Aromatic:
           code = m_toolkit->AromaticAtomTemplate(m_language);
           break;
-        case AE_ALIPHATIC:
+        case Smiley::AE_Aliphatic:
           code = m_toolkit->AliphaticAtomTemplate(m_language);
           break;
-        case AE_CYCLIC:
+        case Smiley::AE_Cyclic:
           code = m_toolkit->CyclicAtomTemplate(m_language);
           break;
-        case AE_ACYCLIC:
+        case Smiley::AE_Acyclic:
           code = m_toolkit->AcyclicAtomTemplate(m_language);
           break;
-        case AE_MASS:
+        case Smiley::AE_Isotope:
           code = m_toolkit->MassAtomTemplate(m_language);
           break;
-        case AE_ELEM:
+        case Smiley::AE_AtomicNumber:
           code = m_toolkit->ElementAtomTemplate(m_language);
           break;
-        case AE_AROMELEM:
+        case Smiley::AE_AromaticElement:
           code = m_toolkit->AromaticElementAtomTemplate(m_language);
           break;
-        case AE_ALIPHELEM:
+        case Smiley::AE_AliphaticElement:
           code = m_toolkit->AliphaticElementAtomTemplate(m_language);
           break;
-        case AE_HCOUNT:
+        case Smiley::AE_TotalH:
           code = m_toolkit->HydrogenCountAtomTemplate(m_language);
           break;
-        case AE_CHARGE:
+        case Smiley::AE_Charge:
           code = m_toolkit->ChargeAtomTemplate(m_language);
           break;
-        case AE_CONNECT:
+        case Smiley::AE_Connectivity:
           code = m_toolkit->ConnectAtomTemplate(m_language);
           break;
-        case AE_DEGREE:
+        case Smiley::AE_Degree:
           code = m_toolkit->DegreeAtomTemplate(m_language);
           break;
-        case AE_IMPLICIT:
+        case Smiley::AE_ImplicitH:
           code = m_toolkit->ImplicitAtomTemplate(m_language);
           break;
-        case AE_RINGS:
+        case Smiley::AE_RingMembership:
           code = m_toolkit->NumRingsAtomTemplate(m_language);
           break;
-        case AE_SIZE:
+        case Smiley::AE_RingSize:
           code = m_toolkit->RingSizeAtomTemplate(m_language);
           break;
-        case AE_VALENCE:
+        case Smiley::AE_Valence:
           code = m_toolkit->ValenceAtomTemplate(m_language);
           break;
-        case AE_CHIRAL:
+        case Smiley::AE_Chirality:
           code = "true";
           break;
-        case AE_HYB:
-          code = m_toolkit->HybAtomTemplate(m_language);
-          break;
-        case AE_RINGCONNECT:
+        //case AE_HYB:
+        //  code = m_toolkit->HybAtomTemplate(m_language);
+        //  break;
+        case Smiley::AE_RingConnectivity:
           code = m_toolkit->RingConnectAtomTemplate(m_language);
           break;
         default:
@@ -265,37 +267,37 @@ namespace SC {
         code = make_string(UnaryNotString(), "(", code, ")");
       if (IsValued(expr))
         replace_all(code, "$value", make_string(expr->leaf.value));
-      if (IsNegatedLeaf(expr) && IsValued(expr->mon.arg))
-        replace_all(code, "$value", make_string(expr->mon.arg->leaf.value));
+      if (IsNegatedLeaf(expr) && IsValued(expr->unary.arg))
+        replace_all(code, "$value", make_string(expr->unary.arg->leaf.value));
       return code; 
     }
     
-    std::string ExprString(const BondExpr *expr)
+    std::string ExprString(const SmartsBondExpr *expr)
     {
       if (!IsLeaf(expr) && !IsNegatedLeaf(expr))
         return "";
       std::string code;
       switch (expr->type) {
-        case BE_NOT:
-          code = ExprString(expr->mon.arg);
-        case BE_ANY:
+        case Smiley::OP_Not:
+          code = ExprString(expr->unary.arg);
+        case Smiley::BE_True:
           code = "true";
         case BE_DEFAULT:
           code = m_toolkit->DefaultBondTemplate(m_language);
-        case BE_SINGLE:
+        case Smiley::BE_Single:
           code = m_toolkit->SingleBondTemplate(m_language);
-        case BE_DOUBLE:
+        case Smiley::BE_Double:
           code = m_toolkit->DoubleBondTemplate(m_language);
-        case BE_TRIPLE:
+        case Smiley::BE_Triple:
           code = m_toolkit->TripleBondTemplate(m_language);
-        case BE_AROM:
+        case Smiley::BE_Aromatic:
           code = m_toolkit->AromaticBondTemplate(m_language);
-        case BE_RING:
+        case Smiley::BE_Ring:
           code = m_toolkit->RingBondTemplate(m_language);
-        case BE_UP:
-        case BE_DOWN:
-        case BE_UPUNSPEC:
-        case BE_DOWNUNSPEC:
+        case Smiley::BE_Up:
+        case Smiley::BE_Down:
+        //case Smiley::BE_UpUNSPEC:
+        //case BE_DOWNUNSPEC:
         default:
           break;
       }
@@ -341,12 +343,12 @@ namespace SC {
     }
 
 
-    int GetValue(AtomExpr *expr)
+    int GetValue(SmartsAtomExpr *expr)
     {
       return expr->leaf.value;
     }
 
-    int GetValue(BondExpr *expr)
+    int GetValue(SmartsBondExpr *expr)
     {
       return 0;
     }
@@ -366,7 +368,7 @@ namespace SC {
       if (std::find(m_functions.begin(), m_functions.end(), functionName) != m_functions.end())
         return functionName;
       
-      enum SmartsCodeGenerator::ArgType argType = SameType<AtomExpr, Expr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
+      enum SmartsCodeGenerator::ArgType argType = SameType<SmartsAtomExpr, Expr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
       os << CommentString() << GetExprString(expr) << std::endl;
       os << FunctionTemplate(functionName, argType, expr2, false);
       os << std::endl;
@@ -384,7 +386,7 @@ namespace SC {
     template<typename Expr>
     std::string UnaryExprFunction(std::ostream &os, enum UnaryOp op, const Expr *expr)
     {
-      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
+      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, SmartsAtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
       std::string arg = argType == SmartsCodeGenerator::AtomArg ? "(atom)" : "(bond)";
 
       std::string code = m_noinline ? "" : ExprString(expr);
@@ -394,7 +396,7 @@ namespace SC {
         switch (op) {
           case UnaryNot:
             functionName = make_string("EvalNotExpr_", ++m_not);
-            std::string argFunctionName = GenerateExprFunction(os, expr->mon.arg);
+            std::string argFunctionName = GenerateExprFunction(os, expr->unary.arg);
             expr_str = UnaryNotString() + argFunctionName + arg;
             break;
         }
@@ -428,11 +430,11 @@ namespace SC {
     template<typename Expr>
     std::string BinaryExprFunction(std::ostream &os, enum BinaryOp op, const Expr *expr)
     {
-      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, AtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
+      enum SmartsCodeGenerator::ArgType argType = SameType<Expr, SmartsAtomExpr>::result ? SmartsCodeGenerator::AtomArg : SmartsCodeGenerator::BondArg;
       std::string arg = argType == SmartsCodeGenerator::AtomArg ? "(atom)" : "(bond)";
       
-      std::string lft_expr = m_noinline ? "" : Bracket(ExprString(expr->bin.lft));
-      std::string rgt_expr = m_noinline ? "" :  Bracket(ExprString(expr->bin.rgt));
+      std::string lft_expr = m_noinline ? "" : Bracket(ExprString(expr->binary.lft));
+      std::string rgt_expr = m_noinline ? "" :  Bracket(ExprString(expr->binary.rgt));
 
       std::string op_str, op_expr;
       switch (op) {
@@ -448,17 +450,17 @@ namespace SC {
  
       bool lft_leaf = true, rgt_leaf = true;
       if (lft_expr.empty()) {
-        lft_expr = GenerateExprFunction(os, expr->bin.lft) + arg;
+        lft_expr = GenerateExprFunction(os, expr->binary.lft) + arg;
         lft_leaf = false;
       }
       if (rgt_expr.empty()) {
-        rgt_expr = GenerateExprFunction(os, expr->bin.rgt) + arg;
+        rgt_expr = GenerateExprFunction(os, expr->binary.rgt) + arg;
         rgt_leaf = false;
       }
         
       std::string functionName;
       if (lft_leaf && rgt_leaf && !m_noinline) {
-        functionName = ExprFunctionName(expr->bin.lft) + "_" + op_str + "_" + ExprFunctionName(expr->bin.rgt);
+        functionName = ExprFunctionName(expr->binary.lft) + "_" + op_str + "_" + ExprFunctionName(expr->binary.rgt);
         if (std::find(m_functions.begin(), m_functions.end(), functionName) != m_functions.end())
           return functionName;
       } else
@@ -484,33 +486,33 @@ namespace SC {
     std::string GetValuedExprCode(int type)
     {
       switch (type) {
-        case AE_MASS:
+        case Smiley::AE_Isotope:
           return m_toolkit->MassAtomTemplate(m_language);
-        case AE_ELEM:
+        case Smiley::AE_AtomicNumber:
           return m_toolkit->ElementAtomTemplate(m_language);
-        case AE_AROMELEM:
+        case Smiley::AE_AromaticElement:
           return m_toolkit->AromaticElementAtomTemplate(m_language);
-        case AE_ALIPHELEM:
+        case Smiley::AE_AliphaticElement:
           return m_toolkit->AliphaticElementAtomTemplate(m_language);
-        case AE_HCOUNT:
+        case Smiley::AE_TotalH:
           return m_toolkit->HydrogenCountAtomTemplate(m_language);
-        case AE_CHARGE:
+        case Smiley::AE_Charge:
           return m_toolkit->ChargeAtomTemplate(m_language);
-        case AE_CONNECT:
+        case Smiley::AE_Connectivity:
           return m_toolkit->ConnectAtomTemplate(m_language);
-        case AE_DEGREE:
+        case Smiley::AE_Degree:
           return m_toolkit->DegreeAtomTemplate(m_language);
-        case AE_IMPLICIT:
+        case Smiley::AE_ImplicitH:
           return m_toolkit->ImplicitAtomTemplate(m_language);
-        case AE_RINGS:
+        case Smiley::AE_RingMembership:
           return m_toolkit->NumRingsAtomTemplate(m_language);
-        case AE_SIZE:
+        case Smiley::AE_RingSize:
           return m_toolkit->RingSizeAtomTemplate(m_language);
-        case AE_VALENCE:
+        case Smiley::AE_Valence:
           return m_toolkit->ValenceAtomTemplate(m_language);
-        case AE_HYB:
-          return m_toolkit->HybAtomTemplate(m_language);
-        case AE_RINGCONNECT:
+        //case AE_HYB:
+        //  return m_toolkit->HybAtomTemplate(m_language);
+        case Smiley::AE_RingConnectivity:
           return m_toolkit->RingConnectAtomTemplate(m_language);
       }
 
@@ -520,35 +522,35 @@ namespace SC {
     template<typename Expr>
     bool IsTypeOrNegatedType(Expr *expr, int type)
     {
-      return expr->type == type || (IsNot(expr) && expr->mon.arg->type == type);
+      return expr->type == type || (IsNot(expr) && expr->unary.arg->type == type);
     }
 
-    void FindSwitchableLeafs(const std::vector<AtomExpr*> &leafs, std::vector<AtomExpr*> &switchable, std::vector<AtomExpr*> &not_switchable)
+    void FindSwitchableLeafs(const std::vector<SmartsAtomExpr*> &leafs, std::vector<SmartsAtomExpr*> &switchable, std::vector<SmartsAtomExpr*> &not_switchable)
     {
       for (std::size_t i = 0; i < leafs.size(); ++i)
-        if ((IsNot(leafs[i]) && m_toolkit->IsSwitchable(leafs[i]->mon.arg->type)) || m_toolkit->IsSwitchable(leafs[i]->type))
+        if ((IsNot(leafs[i]) && m_toolkit->IsSwitchable(leafs[i]->unary.arg->type)) || m_toolkit->IsSwitchable(leafs[i]->type))
           switchable.push_back(leafs[i]);
         else
           not_switchable.push_back(leafs[i]);
     }
     
-    void SortSwitchableByType(const std::vector<AtomExpr*> &switchable, std::map<int, std::vector<AtomExpr*> > &type_to_switchable)
+    void SortSwitchableByType(const std::vector<SmartsAtomExpr*> &switchable, std::map<int, std::vector<SmartsAtomExpr*> > &type_to_switchable)
     {
       for (std::size_t i = 0; i < switchable.size(); ++i)
         if (IsNot(switchable[i]))
-          type_to_switchable[switchable[i]->mon.arg->type].push_back(switchable[i]);
+          type_to_switchable[switchable[i]->unary.arg->type].push_back(switchable[i]);
         else
           type_to_switchable[switchable[i]->type].push_back(switchable[i]);
     }
 
-    void SortSplitSwitchableByType(const std::vector<std::vector<AtomExpr*> > &switchable, std::vector<std::vector<AtomExpr*> > &not_switched,
-        std::map<int, std::vector<std::pair<int, AtomExpr*> > > &type_to_switchable)
+    void SortSplitSwitchableByType(const std::vector<std::vector<SmartsAtomExpr*> > &switchable, std::vector<std::vector<SmartsAtomExpr*> > &not_switched,
+        std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > > &type_to_switchable)
     {
       for (std::size_t i = 0; i < switchable.size(); ++i) {
         std::set<int> added_types;
         for (std::size_t j = 0; j < switchable[i].size(); ++j) {
           if (IsNot(switchable[i][j])) {
-            int type = switchable[i][j]->mon.arg->type;
+            int type = switchable[i][j]->unary.arg->type;
             // add only a single leaf for each type for each and
             if (added_types.find(type) == added_types.end())
               type_to_switchable[type].push_back(std::make_pair(i, switchable[i][j]));
@@ -568,7 +570,7 @@ namespace SC {
       }
 
       // don't try to switch single leafs
-      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = type_to_switchable.begin(); i != type_to_switchable.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > >::iterator i = type_to_switchable.begin(); i != type_to_switchable.end(); ++i)
         if (i->second.size() < 2)
           not_switched[i->second[0].first].push_back(i->second[0].second);
     }
@@ -600,7 +602,7 @@ namespace SC {
      *
      *
      */
-    void GenerateSwitches(std::ostream &os, const std::vector<AtomExpr*> &same_type_switchable, int binaryOp, bool split)
+    void GenerateSwitches(std::ostream &os, const std::vector<SmartsAtomExpr*> &same_type_switchable, int binaryOp, bool split)
     {
       assert(same_type_switchable.size() > 1);
       std::stringstream code;
@@ -608,19 +610,19 @@ namespace SC {
       std::string op = binaryOp == BinaryOr ? "," : "&";
       code << "  " << CommentString() << GetBinaryExprString(same_type_switchable, op) << std::endl;
 
-      int type = IsNot(same_type_switchable[0]) ? same_type_switchable[0]->mon.arg->type : same_type_switchable[0]->type;
+      int type = IsNot(same_type_switchable[0]) ? same_type_switchable[0]->unary.arg->type : same_type_switchable[0]->type;
 
       // sort by value
-      std::map<int, std::vector<AtomExpr*> > value_to_switchable;
-      std::map<int, std::vector<AtomExpr*> > value_to_negated_switchable;
+      std::map<int, std::vector<SmartsAtomExpr*> > value_to_switchable;
+      std::map<int, std::vector<SmartsAtomExpr*> > value_to_negated_switchable;
       for (std::size_t i = 0; i < same_type_switchable.size(); ++i)
         if (IsNot(same_type_switchable[i]))
-          value_to_negated_switchable[same_type_switchable[i]->mon.arg->leaf.value].push_back(same_type_switchable[i]->mon.arg);
+          value_to_negated_switchable[same_type_switchable[i]->unary.arg->leaf.value].push_back(same_type_switchable[i]->unary.arg);
         else
           value_to_switchable[same_type_switchable[i]->leaf.value].push_back(same_type_switchable[i]);
 
       if (!split) {
-        for (std::map<int, std::vector<AtomExpr*> >::iterator i = value_to_switchable.begin(); i != value_to_switchable.end(); ++i)
+        for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = value_to_switchable.begin(); i != value_to_switchable.end(); ++i)
           if (value_to_negated_switchable.find(i->first) != value_to_negated_switchable.end()) {
             if (binaryOp == BinaryAnd) {
               // C!C -> false
@@ -659,7 +661,7 @@ namespace SC {
       // switchable cases
       if (value_to_switchable.size() && (split || binaryOp != BinaryOr || value_to_negated_switchable.empty())) {
         code << indent << "    " << CommentString() << "switchables" << std::endl;
-        for (std::map<int, std::vector<AtomExpr*> >::iterator i = value_to_switchable.begin(); i != value_to_switchable.end(); ++i) {
+        for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = value_to_switchable.begin(); i != value_to_switchable.end(); ++i) {
           code << indent << "    case " << i->first << ":" << std::endl;
           if (split)
             code << "      $case_" << i->first << std::endl;
@@ -683,7 +685,7 @@ namespace SC {
       // !switchable cases
       if (value_to_negated_switchable.size() && (split || binaryOp != BinaryAnd || value_to_switchable.empty())) {
         code << indent << "    " << CommentString() << "negated switchables" << std::endl;
-        for (std::map<int, std::vector<AtomExpr*> >::iterator i = value_to_negated_switchable.begin(); i != value_to_negated_switchable.end(); ++i) {
+        for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = value_to_negated_switchable.begin(); i != value_to_negated_switchable.end(); ++i) {
           if (handled_cases.find(i->first) != handled_cases.end())
             continue;
           code << indent << "    case " << i->first << ":" << std::endl;
@@ -718,7 +720,7 @@ namespace SC {
       os << code.str();
     }
     
-    void GenerateNotSwitched(std::ostream &os, const std::vector<AtomExpr*> &not_switched, int binaryOp, bool split)
+    void GenerateNotSwitched(std::ostream &os, const std::vector<SmartsAtomExpr*> &not_switched, int binaryOp, bool split)
     {
       if (not_switched.empty())
         return;
@@ -740,7 +742,7 @@ namespace SC {
         /*
         if (binaryOp == BinaryAnd) {
           if (IsNot(not_switched[i]))
-            os << ExprString(not_switched[i]->mon.arg);
+            os << ExprString(not_switched[i]->unary.arg);
           else
             os << "!(" << ExprString(not_switched[i]) << ")";
         } else {
@@ -757,7 +759,7 @@ namespace SC {
         os << "    return true;" << std::endl;
     }
 
-    void Debug(const std::string &label, std::ostream &os, const std::vector<AtomExpr*> &expr, bool endl = true)
+    void Debug(const std::string &label, std::ostream &os, const std::vector<SmartsAtomExpr*> &expr, bool endl = true)
     {
       if (endl)
         os << CommentString();
@@ -775,7 +777,7 @@ namespace SC {
       if (endl)
         os << std::endl;
     }
-    void Debug(const std::string &label, std::ostream &os, const std::vector<std::vector<AtomExpr*> > &expr, bool endl = true)
+    void Debug(const std::string &label, std::ostream &os, const std::vector<std::vector<SmartsAtomExpr*> > &expr, bool endl = true)
     {
       os << CommentString();
       if (expr.empty())
@@ -792,7 +794,7 @@ namespace SC {
       if (endl)
         os << std::endl;
     }
-    void Debug(const std::string &label, std::ostream &os, const std::vector<std::pair<int, AtomExpr*> > &expr, bool endl = true)
+    void Debug(const std::string &label, std::ostream &os, const std::vector<std::pair<int, SmartsAtomExpr*> > &expr, bool endl = true)
     {
       os << CommentString();
       if (expr.empty())
@@ -845,20 +847,20 @@ namespace SC {
      *     return false
      *   return true
      */
-    bool GenerateHighAndSwitchCode(std::ostream &os, std::vector<AtomExpr*> &other, bool insideOr = false, bool split = false)
+    bool GenerateHighAndSwitchCode(std::ostream &os, std::vector<SmartsAtomExpr*> &other, bool insideOr = false, bool split = false)
     {
       // find all ANDs switchable leafs
-      std::vector<AtomExpr*> switchable, not_switched; // [expr]
+      std::vector<SmartsAtomExpr*> switchable, not_switched; // [expr]
       FindSwitchableLeafs(other, switchable, not_switched);
 
       // sort switchable by type
-      std::map<int, std::vector<AtomExpr*> > switchable_types; // type -> [expr]
+      std::map<int, std::vector<SmartsAtomExpr*> > switchable_types; // type -> [expr]
       SortSwitchableByType(switchable, switchable_types);
 
       // generate all switch statements
       std::stringstream code;
       std::string op = insideOr ? "," : "&";
-      for (std::map<int, std::vector<AtomExpr*> >::iterator i = switchable_types.begin(); i != switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = switchable_types.begin(); i != switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             not_switched.push_back(i->second[j]);
@@ -890,12 +892,12 @@ namespace SC {
       return true;
     }
     
-    std::string GenerateHighAndSwitchFunction(std::ostream &os, AtomExpr *expr)
+    std::string GenerateHighAndSwitchFunction(std::ostream &os, SmartsAtomExpr *expr)
     {
       if (m_noswitch)
         return "";
       // find all ANDs
-      std::vector<AtomExpr*> ands, other; // [expr]
+      std::vector<SmartsAtomExpr*> ands, other; // [expr]
       FindSameBinaryExpr(expr, ands, other);
       std::stringstream code;
       GenerateHighAndSwitchCode(code, other, NotInsideOr, NotSplit);
@@ -1057,19 +1059,19 @@ namespace SC {
      *       break
      *
      */
-    bool GenerateOrSwitchCode(std::ostream &os, std::vector<AtomExpr*> &or_other, bool insideAnd = false)
+    bool GenerateOrSwitchCode(std::ostream &os, std::vector<SmartsAtomExpr*> &or_other, bool insideAnd = false)
     {
       // find all ORs switchable leafs
-      std::vector<AtomExpr*> or_switchable, or_not_switched; // [expr]
+      std::vector<SmartsAtomExpr*> or_switchable, or_not_switched; // [expr]
       FindSwitchableLeafs(or_other, or_switchable, or_not_switched);
 
       // sort or_switchable by type
-      std::map<int, std::vector<AtomExpr*> > or_switchable_types; // type -> [expr]
+      std::map<int, std::vector<SmartsAtomExpr*> > or_switchable_types; // type -> [expr]
       SortSwitchableByType(or_switchable, or_switchable_types);
 
       // generate all switch statements
       std::stringstream or_code;
-      for (std::map<int, std::vector<AtomExpr*> >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             or_not_switched.push_back(i->second[j]);
@@ -1091,8 +1093,8 @@ namespace SC {
       }
 
       // find all OR's ANDs
-      std::vector<std::vector<AtomExpr*> > and_same(or_not_switched.size()), and_other(or_not_switched.size()); // [and_index][expr]
-      std::vector<AtomExpr*> or_not_switched_not_and;
+      std::vector<std::vector<SmartsAtomExpr*> > and_same(or_not_switched.size()), and_other(or_not_switched.size()); // [and_index][expr]
+      std::vector<SmartsAtomExpr*> or_not_switched_not_and;
       for (std::size_t i = 0; i < or_not_switched.size(); ++i) {
         if (IsAnd(or_not_switched[i]))
           FindSameBinaryExpr(or_not_switched[i], and_same[i], and_other[i]);
@@ -1101,23 +1103,23 @@ namespace SC {
       }
 
       // find all AND's switchable leafs
-      std::vector<std::vector<AtomExpr*> > and_switchable(and_other.size()), and_not_switched(and_other.size()); // [and_index][expr]
+      std::vector<std::vector<SmartsAtomExpr*> > and_switchable(and_other.size()), and_not_switched(and_other.size()); // [and_index][expr]
       for (std::size_t i = 0; i < and_other.size(); ++i)
         FindSwitchableLeafs(and_other[i], and_switchable[i], and_not_switched[i]);
         
       // sort and_switchable by type
-      std::map<int, std::vector<std::pair<int, AtomExpr*> > > and_switchable_types; // type -> [(and_index, expr)]
+      std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > > and_switchable_types; // type -> [(and_index, expr)]
       SortSplitSwitchableByType(and_switchable, and_not_switched, and_switchable_types);
 
       // sort switchable types by size
       std::vector<std::pair<int, int> > and_switchable_sizes; // [(type, and_switchable_types size)]
-      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
         and_switchable_sizes.push_back(std::make_pair(i->first, i->second.size()));
       std::sort(and_switchable_sizes.begin(), and_switchable_sizes.end(), SortPairs<int, int, PairSecond, std::greater>());
     
       // create mapping from expr pointer to and index
-      std::map<AtomExpr*, int> expr_to_and_index; // expr -> and index
-      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
+      std::map<SmartsAtomExpr*, int> expr_to_and_index; // expr -> and index
+      for (std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i)
         for (std::size_t j = 0; j < i->second.size(); ++j)
           expr_to_and_index[i->second[j].second] = i->second[j].first;
 
@@ -1138,8 +1140,8 @@ namespace SC {
       // not_switched[2]: [ R ]
       // not_switched[3]: [ a ]
       //
-      // switchable_types[AE_ALIPHELEM]: [ C !N !O ]
-      // switchable_types[AE_HCOUNT]: [ H2 H3 H4 ]
+      // switchable_types[Smiley::AE_AliphaticElement]: [ C !N !O ]
+      // switchable_types[Smiley::AE_TotalH]: [ H2 H3 H4 ]
       //
       // Generate switch 1:
       //
@@ -1251,10 +1253,10 @@ namespace SC {
         //   case_to_expr[case_8]: []
         //   case_to_expr[default]: [ H3 H4 ]
         //
-        std::map<std::string, std::vector<AtomExpr*> > case_to_expr; // X -> [expr]
+        std::map<std::string, std::vector<SmartsAtomExpr*> > case_to_expr; // X -> [expr]
         for (std::size_t j = 0; j < and_switchable_types[type].size(); ++j) {
           int and_index = and_switchable_types[type][j].first;
-          AtomExpr *expr = and_switchable_types[type][j].second;
+          SmartsAtomExpr *expr = and_switchable_types[type][j].second;
           for (std::size_t k = 0; k < index_to_case[and_index].size(); ++k) {
             std::string case_str = ExtractCase(index_to_case[and_index][k]); // $and_i_X_Y -> X
             case_to_expr[case_str].push_back(expr);
@@ -1263,7 +1265,7 @@ namespace SC {
         // remove case_to_expr lists of size 1
         for (std::size_t j = 0; j < and_switchable_types[type].size(); ++j) {
           int and_index = and_switchable_types[type][j].first;
-          AtomExpr *expr = and_switchable_types[type][j].second;
+          SmartsAtomExpr *expr = and_switchable_types[type][j].second;
           for (std::size_t k = 0; k < index_to_case[and_index].size(); ++k) {
             std::string case_str = ExtractCase(index_to_case[and_index][k]); // $and_i_X_Y -> X
             if (case_to_expr[case_str].size() < 2) {
@@ -1273,7 +1275,7 @@ namespace SC {
           }
         }
 
-        for (std::map<std::string, std::vector<AtomExpr*> >::iterator j = case_to_expr.begin(); j != case_to_expr.end(); ++j) {
+        for (std::map<std::string, std::vector<SmartsAtomExpr*> >::iterator j = case_to_expr.begin(); j != case_to_expr.end(); ++j) {
 
           std::string code;
           std::stringstream ss;
@@ -1388,9 +1390,9 @@ namespace SC {
           // add $and_i_case_j_Y to case_code[j] for not negated leafs
           // add $and_i_default_!Y to default_code for negated leafs
           for (std::size_t k = 0; k < j->second.size(); ++k) {
-            AtomExpr *expr = j->second[k];
+            SmartsAtomExpr *expr = j->second[k];
             int and_index = expr_to_and_index[expr];
-            int value = IsNot(expr) ? expr->mon.arg->leaf.value : expr->leaf.value;
+            int value = IsNot(expr) ? expr->unary.arg->leaf.value : expr->leaf.value;
             if (IsNot(expr)) {
               case_code[value] += ""; // make sure case_code[value] exists
               for (std::size_t l = 0; l < index_to_case[and_index].size(); ++l) {
@@ -1434,11 +1436,11 @@ namespace SC {
           }
           // and $and_i_case_j_!Y to all case_code[!j] for negated leafs
           for (std::size_t k = 0; k < j->second.size(); ++k) {
-            AtomExpr *expr = j->second[k];
+            SmartsAtomExpr *expr = j->second[k];
             int and_index = expr_to_and_index[expr];
             if (!IsNot(expr))
               continue;
-            int value = expr->mon.arg->leaf.value;
+            int value = expr->unary.arg->leaf.value;
             for (std::map<int, std::string>::iterator l = case_code.begin(); l != case_code.end(); ++l) {
               if (value == l->first)
                 continue;
@@ -1579,8 +1581,8 @@ namespace SC {
           //                    break
           //                   
           for (std::size_t k = 0; k < j->second.size(); ++k) {
-            AtomExpr *expr = j->second[k];
-            int value = IsNot(expr) ? expr->mon.arg->leaf.value : expr->leaf.value;
+            SmartsAtomExpr *expr = j->second[k];
+            int value = IsNot(expr) ? expr->unary.arg->leaf.value : expr->leaf.value;
             if (IsNot(expr)) {
               if (case_code[value].empty())
                 replace_first(code, make_string("$case_", value), "break;");
@@ -1624,14 +1626,14 @@ namespace SC {
       return true;
     }
     
-    std::string GenerateOrSwitchFunction(std::ostream &os, AtomExpr *expr)
+    std::string GenerateOrSwitchFunction(std::ostream &os, SmartsAtomExpr *expr)
     {
       return ""; // DISABLED for now until I finsish this...
 
       if (m_noswitch)
         return "";
       // find all ORs
-      std::vector<AtomExpr*> or_same, or_other; // [expr]
+      std::vector<SmartsAtomExpr*> or_same, or_other; // [expr]
       FindSameBinaryExpr(expr, or_same, or_other);
       std::stringstream code;
       GenerateOrSwitchCode(code, or_other);
@@ -1652,19 +1654,19 @@ namespace SC {
       return functionName;
     }
     
-    bool GenerateLowAndSwitchCode(std::ostream &os, std::vector<AtomExpr*> &and_same, std::vector<AtomExpr*> &and_other)
+    bool GenerateLowAndSwitchCode(std::ostream &os, std::vector<SmartsAtomExpr*> &and_same, std::vector<SmartsAtomExpr*> &and_other)
     {
       // find all ANDs switchable leafs
-      std::vector<AtomExpr*> and_switchable, and_not_switched; // [expr]
+      std::vector<SmartsAtomExpr*> and_switchable, and_not_switched; // [expr]
       FindSwitchableLeafs(and_other, and_switchable, and_not_switched);
 
       // sort and_switchable by type
-      std::map<int, std::vector<AtomExpr*> > and_switchable_types; // type -> [expr]
+      std::map<int, std::vector<SmartsAtomExpr*> > and_switchable_types; // type -> [expr]
       SortSwitchableByType(and_switchable, and_switchable_types);
 
       // generate all switch statements
       std::stringstream and_code;
-      for (std::map<int, std::vector<AtomExpr*> >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i) {
+      for (std::map<int, std::vector<SmartsAtomExpr*> >::iterator i = and_switchable_types.begin(); i != and_switchable_types.end(); ++i) {
         if (i->second.size() < 2) {
           for (std::size_t j = 0; j < i->second.size(); ++j)
             and_not_switched.push_back(i->second[j]);
@@ -1686,8 +1688,8 @@ namespace SC {
       Debug("and_not_switched", and_code, and_not_switched);
 
       // find all AND's ORs
-      std::vector<std::vector<AtomExpr*> > or_same(and_not_switched.size()), or_other(and_not_switched.size()); // [or_index][expr]
-      std::vector<AtomExpr*> and_not_switched_not_or;
+      std::vector<std::vector<SmartsAtomExpr*> > or_same(and_not_switched.size()), or_other(and_not_switched.size()); // [or_index][expr]
+      std::vector<SmartsAtomExpr*> and_not_switched_not_or;
       for (std::size_t i = 0; i < and_not_switched.size(); ++i) {
         if (IsOr(and_not_switched[i])) {
           FindSameBinaryExpr(and_not_switched[i], or_same[i], or_other[i]);
@@ -1696,7 +1698,7 @@ namespace SC {
       }
 
       int num_ors = 0;
-      std::map<AtomExpr*, int> expr_to_or_i;
+      std::map<SmartsAtomExpr*, int> expr_to_or_i;
       for (std::size_t i = 0; i < or_other.size(); ++i) {
         if (!or_other[i].size())
           continue;
@@ -1711,16 +1713,16 @@ namespace SC {
 
 
       // find all OR's switchable leafs
-      std::vector<std::vector<AtomExpr*> > or_switchable(or_other.size()), or_not_switched(or_other.size()); // [or_index][expr]
+      std::vector<std::vector<SmartsAtomExpr*> > or_switchable(or_other.size()), or_not_switched(or_other.size()); // [or_index][expr]
       for (std::size_t i = 0; i < or_other.size(); ++i)
         FindSwitchableLeafs(or_other[i], or_switchable[i], or_not_switched[i]);
 
       // sort or_switchable by type
-      std::map<int, std::vector<std::pair<int, AtomExpr*> > > or_switchable_types; // type -> [(or_index, expr)]
+      std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > > or_switchable_types; // type -> [(or_index, expr)]
       SortSplitSwitchableByType(or_switchable, or_not_switched, or_switchable_types);
 
       std::vector<std::pair<int, int> > or_switchable_sizes; // [(type, or_switchable_types_size)]
-      for (std::map<int, std::vector<std::pair<int, AtomExpr*> > >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i)
+      for (std::map<int, std::vector<std::pair<int, SmartsAtomExpr*> > >::iterator i = or_switchable_types.begin(); i != or_switchable_types.end(); ++i)
         or_switchable_sizes.push_back(std::make_pair(i->first, i->second.size()));
       std::sort(or_switchable_sizes.begin(), or_switchable_sizes.end(), SortPairs<int, int, PairSecond, std::greater>());
       
@@ -1735,7 +1737,7 @@ namespace SC {
       
         Debug("or_switchable_types", or_code, or_switchable_types[type]);
         
-        std::vector<AtomExpr*> or_switched;
+        std::vector<SmartsAtomExpr*> or_switched;
         for (std::size_t j = 0; j < or_switchable_types[type].size(); ++j) {
           /*
           if (std::find(or_is.begin(), or_is.end(), or_switchable_types[type][j].first) != or_is.end()) {
@@ -1770,7 +1772,7 @@ namespace SC {
           //or_code << "// Or inner code:\n" << ss.str() << "// End or inner code\n";
 
           std::string inner_code = ss.str();
-          int value = IsNot(or_switchable_types[type][j].second) ? or_switchable_types[type][j].second->mon.arg->leaf.value : or_switchable_types[type][j].second->leaf.value;
+          int value = IsNot(or_switchable_types[type][j].second) ? or_switchable_types[type][j].second->unary.arg->leaf.value : or_switchable_types[type][j].second->leaf.value;
 
           if (inner_code.empty()) {
             inner_code = make_string("  or_", expr_to_or_i[or_switchable_types[type][j].second], " = true;");
@@ -1806,7 +1808,7 @@ namespace SC {
         }
         // replace $case_i with case code
         for (std::size_t j = 0; j < or_switchable_types[type].size(); ++j) {
-          int value = IsNot(or_switchable_types[type][j].second) ? or_switchable_types[type][j].second->mon.arg->leaf.value : or_switchable_types[type][j].second->leaf.value;
+          int value = IsNot(or_switchable_types[type][j].second) ? or_switchable_types[type][j].second->unary.arg->leaf.value : or_switchable_types[type][j].second->leaf.value;
           if (IsNot(or_switchable_types[type][j].second)) {
             if (case_code[or_switchable_types[type][j].second->leaf.value].empty())
               replace_first(code, make_string("$case_", value), "      break;");
@@ -1847,7 +1849,7 @@ namespace SC {
       for (std::size_t j = 0; j < and_not_switched_not_or.size(); ++j) {
         and_code << "  // " << GetExprString(and_not_switched_not_or[j]) << std::endl;
         if (IsNot(and_not_switched_not_or[j])) {
-          std::string expr_code = ExprString(and_not_switched_not_or[j]->mon.arg); //assert(expr_code.size());
+          std::string expr_code = ExprString(and_not_switched_not_or[j]->unary.arg); //assert(expr_code.size());
           and_code << "  if (" << expr_code << ")" << std::endl;
         } else {
           std::string expr_code = ExprString(and_not_switched_not_or[j]); //assert(expr_code.size());
@@ -1882,14 +1884,14 @@ namespace SC {
       return true;  
     }
     
-    std::string GenerateLowAndSwitchFunction(std::ostream &os, AtomExpr *expr)
+    std::string GenerateLowAndSwitchFunction(std::ostream &os, SmartsAtomExpr *expr)
     {
       return ""; // DISABLED for now until I finsish this...
 
       if (m_noswitch)
         return "";
       // find all ANDs
-      std::vector<AtomExpr*> and_same, and_other; // [expr]
+      std::vector<SmartsAtomExpr*> and_same, and_other; // [expr]
       FindSameBinaryExpr(expr, and_same, and_other);
       std::stringstream code;
       GenerateLowAndSwitchCode(code, and_same, and_other);
@@ -1912,75 +1914,75 @@ namespace SC {
 
 
 
-    std::string GenerateExprFunction(std::ostream &os, AtomExpr *expr)
+    std::string GenerateExprFunction(std::ostream &os, SmartsAtomExpr *expr)
     {
       switch (expr->type) {
-        case AE_ANDHI:
+        case Smiley::OP_AndHi:
           {
             std::string functionName = GenerateHighAndSwitchFunction(os, expr);
             if (functionName.size())
               return functionName;
             return BinaryExprFunction(os, BinaryAnd, expr);
           }
-        case AE_ANDLO:
+        case Smiley::OP_AndLo:
           {
             std::string functionName = GenerateLowAndSwitchFunction(os, expr);
             if (functionName.size())
               return functionName;
             return BinaryExprFunction(os, BinaryAnd, expr);
           }
-        case AE_OR:
+        case Smiley::OP_Or:
           {
             std::string functionName = GenerateOrSwitchFunction(os, expr);
             if (functionName.size())
               return functionName;
             return BinaryExprFunction(os, BinaryOr, expr);
           }
-        case AE_RECUR:
-          break;
-        case AE_NOT:
+        //case AE_RECUR:
+        //  break;
+        case Smiley::OP_Not:
           return UnaryExprFunction(os, UnaryNot, expr);
-        case AE_TRUE:
+        case Smiley::AE_True:
           return ExprFunction(os, "EvalTrueExpr", "true", expr);
-        case AE_FALSE:
+        case Smiley::AE_False:
           return ExprFunction(os, "EvalFalseExpr", "false", expr);
-        case AE_AROMATIC:
+        case Smiley::AE_Aromatic:
           return ExprFunction(os, "EvalAromaticExpr", m_toolkit->AromaticAtomTemplate(m_language), expr);
-        case AE_ALIPHATIC:
+        case Smiley::AE_Aliphatic:
           return ExprFunction(os, "EvalAliphaticExpr", m_toolkit->AliphaticAtomTemplate(m_language), expr);
-        case AE_CYCLIC:
+        case Smiley::AE_Cyclic:
           return ExprFunction(os, "EvalCyclicExpr", m_toolkit->CyclicAtomTemplate(m_language), expr);
-        case AE_ACYCLIC:
+        case Smiley::AE_Acyclic:
           return ExprFunction(os, "EvalAcyclicExpr", m_toolkit->AcyclicAtomTemplate(m_language), expr);
-        case AE_MASS:
+        case Smiley::AE_Isotope:
           return ExprFunction(os, "EvalMassExpr", m_toolkit->MassAtomTemplate(m_language), expr);
-        case AE_ELEM:
+        case Smiley::AE_AtomicNumber:
           return ExprFunction(os, "EvalElementExpr", m_toolkit->ElementAtomTemplate(m_language), expr);
-        case AE_AROMELEM:
+        case Smiley::AE_AromaticElement:
           return ExprFunction(os, "EvalAromaticElementExpr", m_toolkit->AromaticElementAtomTemplate(m_language), expr);
-        case AE_ALIPHELEM:
+        case Smiley::AE_AliphaticElement:
           return ExprFunction(os, "EvalAliphaticElementExpr", m_toolkit->AliphaticElementAtomTemplate(m_language), expr);
-        case AE_HCOUNT:
+        case Smiley::AE_TotalH:
           return ExprFunction(os, "EvalHydrogenCountExpr", m_toolkit->HydrogenCountAtomTemplate(m_language), expr);
-        case AE_CHARGE:
+        case Smiley::AE_Charge:
           return ExprFunction(os, "EvalChargeExpr", m_toolkit->ChargeAtomTemplate(m_language), expr);
-        case AE_CONNECT:
+        case Smiley::AE_Connectivity:
           return ExprFunction(os, "EvalConnectExpr", m_toolkit->ConnectAtomTemplate(m_language), expr);
-        case AE_DEGREE:
+        case Smiley::AE_Degree:
           return ExprFunction(os, "EvalDegreeExpr", m_toolkit->DegreeAtomTemplate(m_language), expr);
-        case AE_IMPLICIT:
+        case Smiley::AE_ImplicitH:
           return ExprFunction(os, "EvalImplicitExpr", m_toolkit->ImplicitAtomTemplate(m_language), expr);
-        case AE_RINGS:
+        case Smiley::AE_RingMembership:
           return ExprFunction(os, "EvalRingsExpr", m_toolkit->NumRingsAtomTemplate(m_language), expr);
-        case AE_SIZE:
+        case Smiley::AE_RingSize:
           return ExprFunction(os, "EvalSizeExpr", m_toolkit->RingSizeAtomTemplate(m_language), expr);
-        case AE_VALENCE:
+        case Smiley::AE_Valence:
           return ExprFunction(os, "EvalValenceExpr", m_toolkit->ValenceAtomTemplate(m_language), expr);
-        case AE_CHIRAL:
+        case Smiley::AE_Chirality:
           return ExprFunction(os, "EvalChiralExpr", "true", expr);
-        case AE_HYB:
-          return ExprFunction(os, "EvalHybridizationExpr", m_toolkit->HybAtomTemplate(m_language), expr);
-        case AE_RINGCONNECT:
+        //case AE_HYB:
+        //  return ExprFunction(os, "EvalHybridizationExpr", m_toolkit->HybAtomTemplate(m_language), expr);
+        case Smiley::AE_RingConnectivity:
           return ExprFunction(os, "EvalRingConnectExpr", m_toolkit->RingConnectAtomTemplate(m_language), expr);
         default:
           return ExprFunction(os, "EvalTrueExpr", "true", expr);
@@ -1989,49 +1991,49 @@ namespace SC {
       return "";
     }
 
-    std::string GenerateExprFunction(std::ostream &os, BondExpr *expr)
+    std::string GenerateExprFunction(std::ostream &os, SmartsBondExpr *expr)
     {
       switch (expr->type) {
-        case BE_ANDHI:
-        case BE_ANDLO:
+        case Smiley::OP_AndHi:
+        case Smiley::OP_AndLo:
           return BinaryExprFunction(os, BinaryAnd, expr);
-        case BE_OR:
+        case Smiley::OP_Or:
           return BinaryExprFunction(os, BinaryOr, expr);
-        case BE_NOT:
+        case Smiley::OP_Not:
           return UnaryExprFunction(os, UnaryNot, expr);
-        case BE_ANY:
+        case Smiley::BE_True:
           return ExprFunction(os, "EvalAnyExpr", "true", expr);
         case BE_DEFAULT:
           return ExprFunction(os, "EvalDefaultExpr", m_toolkit->DefaultBondTemplate(m_language), expr);
-        case BE_SINGLE:
+        case Smiley::BE_Single:
           return ExprFunction(os, "EvalSingleExpr", m_toolkit->SingleBondTemplate(m_language), expr);
-        case BE_DOUBLE:
+        case Smiley::BE_Double:
           return ExprFunction(os, "EvalDoubleExpr", m_toolkit->DoubleBondTemplate(m_language), expr);
-        case BE_TRIPLE:
+        case Smiley::BE_Triple:
           return ExprFunction(os, "EvalTripleExpr", m_toolkit->TripleBondTemplate(m_language), expr);
-        case BE_AROM:
+        case Smiley::BE_Aromatic:
           return ExprFunction(os, "EvalAromaticExpr", m_toolkit->AromaticBondTemplate(m_language), expr);
-        case BE_RING:
+        case Smiley::BE_Ring:
           return ExprFunction(os, "EvalRingExpr", m_toolkit->RingBondTemplate(m_language), expr);
-        case BE_UP:
-        case BE_DOWN:
-        case BE_UPUNSPEC:
-        case BE_DOWNUNSPEC:
+        case Smiley::BE_Up:
+        case Smiley::BE_Down:
+        //case Smiley::BE_UpUNSPEC:
+        //case BE_DOWNUNSPEC:
         default:
           return ExprFunction(os, "EvalAnyExpr", "true", expr);
       }
     }
   
-    void GenerateEvalExprFunction(std::ostream &os, Pattern *pattern)
+    void GenerateEvalExprFunction(std::ostream &os, Smarts *pattern)
     {
-      if (pattern->acount < 2)
+      if (pattern->atoms.size() < 2)
         return;
       switch (m_language) {
         case SmartsCodeGenerator::Cpp:
           os << "bool EvalAtomExpr_" << m_smarts.size() << "(int index, " + m_toolkit->AtomArgType(m_language) + " atom)" << std::endl;
           os << "{" << std::endl;
           os << "  switch (index) {" << std::endl;
-          for (int i = 0; i < pattern->acount; ++i) {
+          for (int i = 0; i < pattern->atoms.size(); ++i) {
             os << "    case " << i << ":" << std::endl;
             os << "      return " << m_atomEvalExpr[i] << "(atom);" << std::endl;
           }
@@ -2039,11 +2041,11 @@ namespace SC {
           os << "}" << std::endl;
           os << std::endl;
 
-          if (pattern->bcount) {
+          if (pattern->bonds.size()) {
             os << "bool EvalBondExpr_" << m_smarts.size() << "(int index, " + m_toolkit->BondArgType(m_language) + " bond)" << std::endl;
             os << "{" << std::endl;
             os << "  switch (index) {" << std::endl;
-            for (int i = 0; i < pattern->bcount; ++i) {
+            for (int i = 0; i < pattern->bonds.size(); ++i) {
               os << "    case " << i << ":" << std::endl;
               os << "      return " << m_bondEvalExpr[i] << "(bond);" << std::endl;
             }
@@ -2055,24 +2057,24 @@ namespace SC {
         case SmartsCodeGenerator::Python:
           os << "def EvalAtomExpr_" << m_smarts.size() << "(index, atom):" << std::endl;
           os << "  return { " << 0 << ": " << m_atomEvalExpr[0];
-          if (pattern->acount > 1)
+          if (pattern->atoms.size() > 1)
             os << "," << std::endl;
-          for (int i = 1; i < pattern->acount; ++i) {
+          for (int i = 1; i < pattern->atoms.size(); ++i) {
             os << "           " << i << ": " << m_atomEvalExpr[i];
-            if (i + 1 < pattern->acount)
+            if (i + 1 < pattern->atoms.size())
               os << "," << std::endl;
           }
           os << " }[index](atom)" << std::endl;
           os << std::endl;
 
-          if (pattern->bcount) {
+          if (pattern->bonds.size()) {
             os << "def EvalBondExpr_" << m_smarts.size() << "(index, bond):" << std::endl;
             os << "  return { " << 0 << ": " << m_bondEvalExpr[0];
-            if (pattern->bcount > 1)
+            if (pattern->bonds.size() > 1)
               os << "," << std::endl;
-            for (int i = 1; i < pattern->bcount; ++i) {
+            for (int i = 1; i < pattern->bonds.size(); ++i) {
               os << "           " << i << ": " << m_bondEvalExpr[i];
-              if (i + 1 < pattern->bcount)
+              if (i + 1 < pattern->bonds.size())
                 os << "," << std::endl;
             }
             os << " }[index](bond)" << std::endl;
@@ -2175,7 +2177,7 @@ namespace SC {
               os << "        pattern->ischiral = " << m_patterns[i].ischiral << ";" << std::endl;
               for (int j = 0; j < m_patterns[i].bonds.size(); ++j)
                 os << "        pattern->bonds.push_back(SmartsBond(" 
-                  << m_patterns[i].bonds[j].src << ", " << m_patterns[i].bonds[j].dst 
+                  << m_patterns[i].bonds[j].source << ", " << m_patterns[i].bonds[j].target 
                   << ", " << m_patterns[i].bonds[j].grow << "));" << std::endl;
               os << "        pattern->EvalAtomExpr = &EvalAtomExpr_" << i << ";" << std::endl;
               os << "        pattern->EvalBondExpr = &EvalBondExpr_" << i << ";" << std::endl;
@@ -2201,8 +2203,8 @@ namespace SC {
             os << "    pattern.ischiral = " << m_patterns[i].ischiral << std::endl;
             os << "    pattern.bonds = [";
             for (int j = 0; j < m_patterns[i].bonds.size(); ++j) {
-              os << "SmartsBond("  << m_patterns[i].bonds[j].src << ", "
-                 << m_patterns[i].bonds[j].dst << ", " 
+              os << "SmartsBond("  << m_patterns[i].bonds[j].source << ", "
+                 << m_patterns[i].bonds[j].target << ", " 
                  << m_patterns[i].bonds[j].grow << ")";
               if (j + 1 < m_patterns[i].bonds.size())
                 os << ", " << std::endl << "                     ";
@@ -2278,7 +2280,7 @@ namespace SC {
       }
     }
      
-    void GenerateSingleAtomMatch(std::ostream &os, AtomExpr *expr)
+    void GenerateSingleAtomMatch(std::ostream &os, SmartsAtomExpr *expr)
     {
       os << CommentString() << "[" << GetExprString(expr) << "]" << std::endl;
       switch (m_language) {
@@ -2416,31 +2418,31 @@ namespace SC {
     }
   }
 
-  void SmartsCodeGenerator::GeneratePatternCode(const std::string &smarts, Pattern *pattern, const std::string &function,
+  void SmartsCodeGenerator::GeneratePatternCode(const std::string &smarts, Smarts *pattern, const std::string &function,
       bool nomap, bool count, bool atom)
   {
     d->m_atomEvalExpr.clear();
     d->m_bondEvalExpr.clear();
 
-    for (int i = 0; i < pattern->acount; ++i)
-      d->m_atomEvalExpr[i] = d->GenerateExprFunction(d->m_os, pattern->atom[i].expr);
-    for (int i = 0; i < pattern->bcount; ++i)
-      d->m_bondEvalExpr[i] = d->GenerateExprFunction(d->m_os, pattern->bond[i].expr);
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      d->m_atomEvalExpr[i] = d->GenerateExprFunction(d->m_os, pattern->atoms[i].expr);
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      d->m_bondEvalExpr[i] = d->GenerateExprFunction(d->m_os, pattern->bonds[i].expr);
 
     d->GenerateEvalExprFunction(d->m_os, pattern);
 
-    if (pattern->acount == 1) {
+    if (pattern->atoms.size() == 1) {
       // special case for single atom pattern
-      d->GenerateSingleAtomMatch(d->m_os, pattern->atom[0].expr);
+      d->GenerateSingleAtomMatch(d->m_os, pattern->atoms[0].expr);
       d->m_singleatoms.insert(d->m_patterns.size());
       // dummy pattern
       d->m_patterns.push_back(SmartsPattern<OBAtom, OBBond>());
     } else {
       SmartsPattern<OBAtom, OBBond> cpattern;
-      cpattern.numAtoms = pattern->acount;
-      cpattern.ischiral = pattern->ischiral;
-      for (int i = 0; i < pattern->bcount; ++i)
-        cpattern.bonds.push_back(SmartsBond(pattern->bond[i].src, pattern->bond[i].dst, pattern->bond[i].grow));
+      cpattern.numAtoms = pattern->atoms.size();
+      cpattern.ischiral = pattern->chiral;
+      for (int i = 0; i < pattern->bonds.size(); ++i)
+        cpattern.bonds.push_back(SmartsBond(pattern->bonds[i].source, pattern->bonds[i].target, pattern->bonds[i].grow));
       d->m_patterns.push_back(cpattern);
     }
     
