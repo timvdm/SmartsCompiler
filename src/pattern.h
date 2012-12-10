@@ -1,31 +1,28 @@
 #include "defines.h"
 #include "util.h"
-
-#include <openbabel/parsmart.h>
+#include "smarts.h"
 
 namespace SC {
-
-  using namespace OpenBabel;
 
   template<typename Expr>
   bool IsLeaf(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
+    if (SameType<SmartsAtomExpr, Expr>::result)
       switch (expr->type) {
-        case AE_ANDHI:
-        case AE_ANDLO:
-        case AE_OR:
-        case AE_NOT:
-        case AE_RECUR:
+        case Smiley::OP_AndHi:
+        case Smiley::OP_AndLo:
+        case Smiley::OP_Or:
+        case Smiley::OP_Not:
+        //case AE_RECUR:
           return false;
         default:
           return true;      
       }
     switch (expr->type) {
-      case BE_ANDHI:
-      case BE_ANDLO:
-      case BE_OR:
-      case BE_NOT:
+      case Smiley::OP_AndHi:
+      case Smiley::OP_AndLo:
+      case Smiley::OP_Or:
+      case Smiley::OP_Not:
         return false;
       default:
         return true;      
@@ -35,31 +32,31 @@ namespace SC {
   template<typename Expr>
   bool IsNot(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
-      return expr->type == AE_NOT;
-    return expr->type == BE_NOT;
+    if (SameType<SmartsAtomExpr, Expr>::result)
+      return expr->type == Smiley::OP_Not;
+    return expr->type == Smiley::OP_Not;
   }
 
   template<typename Expr>
   bool IsNegatedLeaf(Expr *expr)
   {
-    return IsNot(expr) && IsLeaf(expr->mon.arg);
+    return IsNot(expr) && IsLeaf(expr->unary.arg);
   }
 
   template<typename Expr>
   bool IsAnd(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
-      return expr->type == AE_ANDHI || expr->type == AE_ANDLO;
-    return expr->type == BE_ANDHI || expr->type == BE_ANDLO;
+    if (SameType<SmartsAtomExpr, Expr>::result)
+      return expr->type == Smiley::OP_AndHi || expr->type == Smiley::OP_AndLo;
+    return expr->type == Smiley::OP_AndHi || expr->type == Smiley::OP_AndLo;
   }
 
   template<typename Expr>
   bool IsOr(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
-      return expr->type == AE_OR;
-    return expr->type == BE_OR;
+    if (SameType<SmartsAtomExpr, Expr>::result)
+      return expr->type == Smiley::OP_Or;
+    return expr->type == Smiley::OP_Or;
   }
 
   template<typename Expr>
@@ -78,13 +75,13 @@ namespace SC {
   int GetOppositeBinaryExprType(Expr *expr)
   {
     if (IsAnd(expr)) {
-        if (SameType<AtomExpr, Expr>::result)
-          return AE_OR;
-        return BE_OR;
+        if (SameType<SmartsAtomExpr, Expr>::result)
+          return Smiley::OP_Or;
+        return Smiley::OP_Or;
     }
-    if (SameType<AtomExpr, Expr>::result)
-      return AE_ANDLO;
-    return BE_ANDLO;
+    if (SameType<SmartsAtomExpr, Expr>::result)
+      return Smiley::OP_AndLo;
+    return Smiley::OP_AndLo;
   }
 
   template<typename Expr>
@@ -104,23 +101,23 @@ namespace SC {
   template<typename Expr>
   bool IsValued(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
+    if (SameType<SmartsAtomExpr, Expr>::result)
       switch (expr->type) {
-        case AE_MASS:
-        case AE_ELEM:
-        case AE_AROMELEM:
-        case AE_ALIPHELEM:
-        case AE_HCOUNT:
-        case AE_CHARGE:
-        case AE_CONNECT:
-        case AE_DEGREE:
-        case AE_IMPLICIT:
-        case AE_RINGS:
-        case AE_SIZE:
-        case AE_VALENCE:
-        case AE_HYB:
-        case AE_RINGCONNECT:
-        case AE_CHIRAL:
+        case Smiley::AE_Isotope:
+        case Smiley::AE_AtomicNumber:
+        case Smiley::AE_AromaticElement:
+        case Smiley::AE_AliphaticElement:
+        case Smiley::AE_TotalH:
+        case Smiley::AE_Charge:
+        case Smiley::AE_Connectivity:
+        case Smiley::AE_Degree:
+        case Smiley::AE_ImplicitH:
+        case Smiley::AE_RingMembership:
+        case Smiley::AE_RingSize:
+        case Smiley::AE_Valence:
+        //case AE_HYB:
+        case Smiley::AE_RingConnectivity:
+        case Smiley::AE_Chirality:
           return true;
         default:
           return false;
@@ -131,22 +128,22 @@ namespace SC {
   template<typename Expr>
   bool IsUnique(Expr *expr)
   {
-    if (SameType<AtomExpr, Expr>::result)
+    if (SameType<SmartsAtomExpr, Expr>::result)
       switch (expr->type) {
-        case AE_MASS:
-        case AE_ELEM:
-        case AE_AROMELEM:
-        case AE_ALIPHELEM:
-        case AE_HCOUNT:
-        case AE_CHARGE:
-        case AE_CONNECT:
-        case AE_DEGREE:
-        case AE_IMPLICIT:
-        case AE_RINGS:
-        case AE_VALENCE:
-        case AE_CHIRAL:
-        case AE_HYB:
-        case AE_RINGCONNECT:
+        case Smiley::AE_Isotope:
+        case Smiley::AE_AtomicNumber:
+        case Smiley::AE_AromaticElement:
+        case Smiley::AE_AliphaticElement:
+        case Smiley::AE_TotalH:
+        case Smiley::AE_Charge:
+        case Smiley::AE_Connectivity:
+        case Smiley::AE_Degree:
+        case Smiley::AE_ImplicitH:
+        case Smiley::AE_RingMembership:
+        case Smiley::AE_Valence:
+        case Smiley::AE_Chirality:
+        //case AE_HYB:
+        case Smiley::AE_RingConnectivity:
           return true;
         default:
           return false;
@@ -157,13 +154,13 @@ namespace SC {
   template<typename Expr>
   bool IsBondOrderExpr(Expr *expr)
   {
-    if (SameType<BondExpr, Expr>::result)
+    if (SameType<SmartsBondExpr, Expr>::result)
       switch (expr->type) {
-        case BE_SINGLE:
-        case BE_DOUBLE:
-        case BE_TRIPLE:
+        case Smiley::BE_Single:
+        case Smiley::BE_Double:
+        case Smiley::BE_Triple:
         case BE_QUAD:
-        case BE_AROM:
+        case Smiley::BE_Aromatic:
           return true;
         default:
           return false;
@@ -171,13 +168,13 @@ namespace SC {
     return false;
   }
 
-  inline bool IsDuplicate(AtomExpr *left, AtomExpr *right)
+  inline bool IsDuplicate(SmartsAtomExpr *left, SmartsAtomExpr *right)
   {
     if (left->type != right->type)
       return false;
     if (IsNot(left)) {
-      left = left->mon.arg;
-      right = right->mon.arg;
+      left = left->unary.arg;
+      right = right->unary.arg;
     }
     if (IsLeaf(left)) {
       if (IsValued(left))
@@ -187,13 +184,13 @@ namespace SC {
     return false;
   }
 
-  inline bool IsDuplicate(BondExpr *left, BondExpr *right)
+  inline bool IsDuplicate(SmartsBondExpr *left, SmartsBondExpr *right)
   {
     if (left->type != right->type)
       return false;
     if (IsNot(left)) {
-      left = left->mon.arg;
-      right = right->mon.arg;
+      left = left->unary.arg;
+      right = right->unary.arg;
     }
     if (IsLeaf(left))
       return true;
@@ -204,10 +201,10 @@ namespace SC {
   void DeleteExpr(Expr *expr)
   {
     if (IsUnary(expr))
-      DeleteExpr(expr->mon.arg);
+      DeleteExpr(expr->unary.arg);
     if (IsBinary(expr)) {
-      DeleteExpr(expr->bin.lft);
-      DeleteExpr(expr->bin.rgt);
+      DeleteExpr(expr->binary.lft);
+      DeleteExpr(expr->binary.rgt);
     }
     delete expr;
   }
@@ -217,10 +214,10 @@ namespace SC {
   {
     int size = 1;
     if (IsUnary(expr))
-      size += CountExpr(expr->mon.arg);
+      size += CountExpr(expr->unary.arg);
     if (IsBinary(expr)) {
-      size += CountExpr(expr->bin.lft);
-      size += CountExpr(expr->bin.rgt);
+      size += CountExpr(expr->binary.lft);
+      size += CountExpr(expr->binary.rgt);
     }
     return size;
   }
@@ -229,14 +226,14 @@ namespace SC {
   void FindSameBinaryExpr(Expr *expr, std::vector<Expr*> &same, std::vector<Expr*> &other)
   {
     same.push_back(expr);
-    if (IsSameType(expr, expr->bin.lft))
-      FindSameBinaryExpr(expr->bin.lft, same, other);
+    if (IsSameType(expr, expr->binary.lft))
+      FindSameBinaryExpr(expr->binary.lft, same, other);
     else
-      other.push_back(expr->bin.lft);
-    if (IsSameType(expr, expr->bin.rgt))
-      FindSameBinaryExpr(expr->bin.rgt, same, other);
+      other.push_back(expr->binary.lft);
+    if (IsSameType(expr, expr->binary.rgt))
+      FindSameBinaryExpr(expr->binary.rgt, same, other);
     else
-      other.push_back(expr->bin.rgt);
+      other.push_back(expr->binary.rgt);
   }
  
 }

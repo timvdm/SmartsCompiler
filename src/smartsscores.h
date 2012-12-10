@@ -1,7 +1,7 @@
 #ifndef SC_SMARTSSCORES_H
 #define SC_SMARTSSCORES_H
 
-#include <openbabel/parsmart.h>
+#include "smarts.h"
 
 namespace SC {
 
@@ -12,74 +12,74 @@ namespace SC {
       {
       }
 
-      virtual double GetExprScore(const OpenBabel::AtomExpr *expr)
+      virtual double GetExprScore(const SmartsAtomExpr *expr)
       {
         return 1.0;
       }
 
-      virtual double GetExprScore(const OpenBabel::BondExpr *expr)
+      virtual double GetExprScore(const SmartsBondExpr *expr)
       {
         return 1.0;
       }
 
-      virtual double GetExprEnvironmentScore(const OpenBabel::Pattern *pattern, const OpenBabel::AtomExpr *expr, int radius)
+      virtual double GetExprEnvironmentScore(const Smarts *pattern, const SmartsAtomExpr *expr, int radius)
       {
         return 1.0;
       }
 
-      virtual double GetExprEnvironmentScore(const OpenBabel::Pattern *pattern, const OpenBabel::BondExpr *expr, int radius)
+      virtual double GetExprEnvironmentScore(const Smarts *pattern, const SmartsBondExpr *expr, int radius)
       {
         return 1.0;
       }
 
-      virtual void Sort(std::vector<OpenBabel::AtomSpec*> &list, bool increasing = true)
+      virtual void Sort(std::vector<SmartsAtom*> &list, bool increasing = true)
       {
       }
 
-      virtual void Sort(std::vector<OpenBabel::BondSpec*> &list, bool increasing = true)
+      virtual void Sort(std::vector<SmartsBond*> &list, bool increasing = true)
       {
       }
 
-      virtual void Sort(std::vector<OpenBabel::AtomExpr*> &list, bool increasing = true)
+      virtual void Sort(std::vector<SmartsAtomExpr*> &list, bool increasing = true)
       {
       }
 
-      virtual void Sort(std::vector<OpenBabel::BondExpr*> &list, bool increasing = true)
+      virtual void Sort(std::vector<SmartsBondExpr*> &list, bool increasing = true)
       {
       }
   };
 
-  template<typename SpecOrExpr, template<typename> class Compare>
-    struct ScoreSortFunctor
+  template<typename AtomBondExpr, template<typename> class Compare>
+  struct ScoreSortFunctor
+  {
+    ScoreSortFunctor(SmartsScores *scores_) : scores(scores_)
     {
-      ScoreSortFunctor(SmartsScores *scores_) : scores(scores_)
-      {
-      }
+    }
 
-      const OpenBabel::AtomExpr* GetExpr(const OpenBabel::AtomSpec *spec) const { return spec->expr; }
-      const OpenBabel::BondExpr* GetExpr(const OpenBabel::BondSpec *spec) const { return spec->expr; }
-      const OpenBabel::AtomExpr* GetExpr(const OpenBabel::AtomExpr *expr) const { return expr; }
-      const OpenBabel::BondExpr* GetExpr(const OpenBabel::BondExpr *expr) const { return expr; }
+    const SmartsAtomExpr* GetExpr(const SmartsAtom *atom) const { return atom->expr; }
+    const SmartsBondExpr* GetExpr(const SmartsBond *bond) const { return bond->expr; }
+    const SmartsAtomExpr* GetExpr(const SmartsAtomExpr *expr) const { return expr; }
+    const SmartsBondExpr* GetExpr(const SmartsBondExpr *expr) const { return expr; }
 
-      bool operator()(const SpecOrExpr *left, const SpecOrExpr *right) const
-      {
-        return compare(scores->GetExprScore(GetExpr(left)), scores->GetExprScore(GetExpr(right)));
-      }
+    bool operator()(const AtomBondExpr *left, const AtomBondExpr *right) const
+    {
+      return compare(scores->GetExprScore(GetExpr(left)), scores->GetExprScore(GetExpr(right)));
+    }
 
 
-      SmartsScores *scores;
-      Compare<double> compare;
-    };
+    SmartsScores *scores;
+    Compare<double> compare;
+  };
 
   class PrettySmartsScores : public SmartsScores
   {
     public:
-      virtual double GetExprScore(const OpenBabel::AtomExpr *expr);
-      virtual double GetExprScore(const OpenBabel::BondExpr *expr);
-      virtual void Sort(std::vector<OpenBabel::AtomSpec*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::BondSpec*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::AtomExpr*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::BondExpr*> &list, bool increasing = true);
+      virtual double GetExprScore(const SmartsAtomExpr *expr);
+      virtual double GetExprScore(const SmartsBondExpr *expr);
+      virtual void Sort(std::vector<SmartsAtom*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsBond*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsAtomExpr*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsBondExpr*> &list, bool increasing = true);
   };
 
 
@@ -87,17 +87,17 @@ namespace SC {
   {
     public:
       ListSmartsScores(const std::string &filename);
-      double GetExprScore(const OpenBabel::AtomExpr *expr);
-      double GetExprScore(const OpenBabel::BondExpr *expr);
-      double GetExprEnvironmentScore(const OpenBabel::Pattern *pattern, const OpenBabel::AtomExpr *expr, int radius);
-      double GetExprEnvironmentScore(const OpenBabel::Pattern *pattern, const OpenBabel::BondExpr *expr, int radius);
-      virtual void Sort(std::vector<OpenBabel::AtomSpec*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::BondSpec*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::AtomExpr*> &list, bool increasing = true);
-      virtual void Sort(std::vector<OpenBabel::BondExpr*> &list, bool increasing = true);
+      double GetExprScore(const SmartsAtomExpr *expr);
+      double GetExprScore(const SmartsBondExpr *expr);
+      double GetExprEnvironmentScore(const Smarts *pattern, const SmartsAtomExpr *expr, int radius);
+      double GetExprEnvironmentScore(const Smarts *pattern, const SmartsBondExpr *expr, int radius);
+      virtual void Sort(std::vector<SmartsAtom*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsBond*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsAtomExpr*> &list, bool increasing = true);
+      virtual void Sort(std::vector<SmartsBondExpr*> &list, bool increasing = true);
 
     private:
-      double EnvironmentScoreDFS(const OpenBabel::Pattern *pattern, const OpenBabel::BondSpec *bond, int radius, int depth);
+      double EnvironmentScoreDFS(const Smarts *pattern, const SmartsBond *bond, int radius, int depth);
 
       unsigned long m_numAtoms;
       unsigned long m_numAromaticAtoms;

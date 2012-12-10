@@ -4,10 +4,6 @@
 #include <openbabel/mol.h>
 #include <openbabel/parsmart.h>
 
-#ifdef HAVE_PYTHON
-#include <Python.h>
-#endif
-
 namespace SC {
 
   struct PythonSmartsPattern;
@@ -67,10 +63,8 @@ namespace SC {
       SmartsMatcher() {}
       virtual ~SmartsMatcher() {}
 
-#ifndef SWIG
       template<typename MoleculeType, typename SmartsPatternType, typename MappingType>
       bool Match(MoleculeType &mol, SmartsPatternType *pat, MappingType &mapping);
-#endif
   };
 
   class OpenBabelSmartsMatcher : public OpenBabel::OBSmartsPattern

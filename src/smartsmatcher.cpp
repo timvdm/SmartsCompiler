@@ -6,10 +6,6 @@
 #include <openbabel/stereo/stereo.h>
 #include <openbabel/stereo/tetrahedral.h>
 
-#ifdef HAVE_PYTHON
-#include "swig.h"
-#endif
-
 namespace SC {
 
   template<typename MappingType>

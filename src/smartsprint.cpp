@@ -5,259 +5,266 @@
 
 namespace SC {
 
-  using namespace OpenBabel;
+  std::string GetSymbol(int atomicNumber)
+  {
+    const char *symbols[] = {
+      "X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl",
+      "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As",
+      "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In",
+      "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb",
+      "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl",
+      "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk",
+      "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Uut",
+      "Fl", "Uup", "Lv", "Uuh",
+    };
 
-  std::string GetAtomExprType(int type)
+    return symbols[atomicNumber];
+  }
+
+  std::string GetSmartsAtomExprType(int type)
   {
     switch (type) {
-      case AE_ANDHI:
+      case Smiley::OP_AndHi:
         return "And (high priority)";
-      case AE_ANDLO:
+      case Smiley::OP_AndLo:
         return "And (low priority)";
-      case AE_OR:
+      case Smiley::OP_Or:
         return "Or";
-      case AE_RECUR:
-        return "Recursive";
-      case AE_NOT:
+      //case Smiley::AE_RECUR:
+      //  return "Recursive";
+      case Smiley::OP_Not:
         return "Not";
-      case AE_TRUE:
+      case Smiley::AE_True:
         return "True";
-      case AE_FALSE:
+      case Smiley::AE_False:
         return "False";
-      case AE_AROMATIC:
+      case Smiley::AE_Aromatic:
         return "Aromatic";
-      case AE_ALIPHATIC:
+      case Smiley::AE_Aliphatic:
         return "Aliphatic";
-      case AE_CYCLIC:
+      case Smiley::AE_Cyclic:
         return "Cyclic";
-      case AE_ACYCLIC:
+      case Smiley::AE_Acyclic:
         return "Acyclic";
-      case AE_MASS:
+      case Smiley::AE_Isotope:
         return "Mass";
-      case AE_ELEM:
+      case Smiley::AE_AtomicNumber:
         return "Element";
-      case AE_AROMELEM:
+      case Smiley::AE_AromaticElement:
         return "Aromatic Element";
-      case AE_ALIPHELEM:
+      case Smiley::AE_AliphaticElement:
         return "Aliphatic Element";
-      case AE_HCOUNT:
+      case Smiley::AE_TotalH:
         return "Hydrogen Count";
-      case AE_CHARGE:
+      case Smiley::AE_Charge:
         return "Charge";
-      case AE_CONNECT:
+      case Smiley::AE_Connectivity:
         return "Connectivity (Implicit Valence)";
-      case AE_DEGREE:
+      case Smiley::AE_Degree:
         return "Degree (Valence)";
-      case AE_IMPLICIT:
+      case Smiley::AE_ImplicitH:
         return "Implicit Hydrogen Count";
-      case AE_RINGS:
+      case Smiley::AE_RingMembership:
         return "Ring Membership Count";
-      case AE_SIZE:
+      case Smiley::AE_RingSize:
         return "In Ring Size";
-      case AE_VALENCE:
+      case Smiley::AE_Valence:
         return "Valence";
-      case AE_CHIRAL:
+      case Smiley::AE_Chirality:
         return "Chirality";
-      case AE_HYB:
-        return "Hybridization";
-      case AE_RINGCONNECT:
+      //case Smiley::AE_HYB:
+      //  return "Hybridization";
+      case Smiley::AE_RingConnectivity:
         return "Ring Connectivity";
     }
 
     return "Unknown";
   }
 
-  std::string GetBondExprType(int type)
+  std::string GetSmartsBondExprType(int type)
   {
     switch (type) {
-      case BE_ANDHI:
+      case Smiley::OP_AndHi:
         return "And (high priority)";
-      case BE_ANDLO:
+      case Smiley::OP_AndLo:
         return "And (low priority)";
-      case BE_OR:
+      case Smiley::OP_Or:
         return "Or";
-      case BE_NOT:
+      case Smiley::OP_Not:
         return "Not";
-      case BE_ANY:
+      case Smiley::BE_True:
         return "Any";
-      case BE_DEFAULT:
-        return "Implicit";
-      case BE_SINGLE:
+      //case Smiley::BE_DEFAULT:
+      //  return "Implicit";
+      case Smiley::BE_Single:
         return "Single";
-      case BE_DOUBLE:
+      case Smiley::BE_Double:
         return "Double";
-      case BE_TRIPLE:
+      case Smiley::BE_Triple:
         return "Triple";
-      case BE_AROM:
+      case Smiley::BE_Aromatic:
         return "Aromatic";
-      case BE_RING:
+      case Smiley::BE_Ring:
         return "Ring";
-      case BE_UP:
+      case Smiley::BE_Up:
         return "Up";
-      case BE_DOWN:
+      case Smiley::BE_Down:
         return "Down";
     }
 
     return "Unknown";
   }
 
-  void PrintAtomExprTree(AtomExpr *expr, int indent, SmartsScores *scores)
+  void PrintSmartsAtomExprTree(SmartsAtomExpr *expr, int indent, SmartsScores *scores)
   {
     std::string prefix = "        ";
     for (int i = 0; i < indent; ++i)
       prefix += "    ";
 
-    std::cout << prefix << "AtomExpr:" << std::endl;
-    std::cout << prefix << "  Type: " << GetAtomExprType(expr->type) << std::endl;
-    std::cout << prefix << "  Score: " << scores->GetExprScore(expr) << std::endl;
+    std::cout << prefix << "SmartsAtomExpr:" << std::endl;
+    std::cout << prefix << "  Type: " << GetSmartsAtomExprType(expr->type) << std::endl;
+//    std::cout << prefix << "  Score: " << scores->GetExprScore(expr) << std::endl;   FIXME FIXME FIXME
 
     switch (expr->type) {
-      case AE_ANDHI:
-        PrintAtomExprTree(expr->bin.lft, indent + 1, scores);
-        PrintAtomExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_AndHi:
+        PrintSmartsAtomExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsAtomExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case AE_ANDLO:
-        PrintAtomExprTree(expr->bin.lft, indent + 1, scores);
-        PrintAtomExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_AndLo:
+        PrintSmartsAtomExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsAtomExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case AE_OR:
-        PrintAtomExprTree(expr->bin.lft, indent + 1, scores);
-        PrintAtomExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_Or:
+        PrintSmartsAtomExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsAtomExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case AE_RECUR:
+      //case Smiley::AE_RECUR:
         // FIXME
+      //  break;
+      case Smiley::OP_Not:
+        PrintSmartsAtomExprTree(expr->unary.arg, indent + 1, scores);
         break;
-      case AE_NOT:
-        PrintAtomExprTree(expr->mon.arg, indent + 1, scores);
+      case Smiley::AE_True:
+      case Smiley::AE_False:
+      case Smiley::AE_Aromatic:
+      case Smiley::AE_Aliphatic:
+      case Smiley::AE_Cyclic:
+      case Smiley::AE_Acyclic:
         break;
-      case AE_TRUE:
-      case AE_FALSE:
-      case AE_AROMATIC:
-      case AE_ALIPHATIC:
-      case AE_CYCLIC:
-      case AE_ACYCLIC:
-        break;
-      case AE_MASS:
+      case Smiley::AE_Isotope:
         std::cout << prefix << "  Isotope: " << expr->leaf.value << std::endl;
         break;
-      case AE_ELEM:
+      case Smiley::AE_AtomicNumber:
         std::cout << prefix << "  AtomicNumber: " << expr->leaf.value << std::endl;
         break;
-      case AE_AROMELEM:
+      case Smiley::AE_AromaticElement:
         std::cout << prefix << "  AtomicNumber: " << expr->leaf.value << std::endl;
         break;
-      case AE_ALIPHELEM:
+      case Smiley::AE_AliphaticElement:
         std::cout << prefix << "  AtomicNumber: " << expr->leaf.value << std::endl;
         break;
-      case AE_HCOUNT:
+      case Smiley::AE_TotalH:
         std::cout << prefix << "  HydrogenCount: " << expr->leaf.value << std::endl;
         break;
-      case AE_CHARGE:
+      case Smiley::AE_Charge:
         std::cout << prefix << "  Charge: " << expr->leaf.value << std::endl;
-      case AE_CONNECT:
+      case Smiley::AE_Connectivity:
         std::cout << prefix << "  ImplicitValence: " << expr->leaf.value << std::endl;
         break;
-      case AE_DEGREE:
+      case Smiley::AE_Degree:
         std::cout << prefix << "  Valence: " << expr->leaf.value << std::endl;
         break;
-      case AE_IMPLICIT:
+      case Smiley::AE_ImplicitH:
         std::cout << prefix << "  ImplicitHydrogenCount: " << expr->leaf.value << std::endl;
         break;
-      case AE_RINGS:
+      case Smiley::AE_RingMembership:
         std::cout << prefix << "  RingMembershipCount: " << expr->leaf.value << std::endl;
         break;
-      case AE_SIZE:
+      case Smiley::AE_RingSize:
         std::cout << prefix << "  InRingSize: " << expr->leaf.value << std::endl;
         break;
-      case AE_VALENCE:
+      case Smiley::AE_Valence:
         std::cout << prefix << "  Valence: " << expr->leaf.value << std::endl;
         break;
-      case AE_CHIRAL:
+      case Smiley::AE_Chirality:
         break;
-      case AE_HYB:
-        std::cout << prefix << "  Hybridization: " << expr->leaf.value << std::endl;
-        break;
-      case AE_RINGCONNECT:
+      //case Smiley::AE_HYB:
+      //  std::cout << prefix << "  Hybridization: " << expr->leaf.value << std::endl;
+      //  break;
+      case Smiley::AE_RingConnectivity:
         std::cout << prefix << "  NumRingBonds: " << expr->leaf.value << std::endl;
         break;
     }
   }
 
-  void PrintBondExprTree(BondExpr *expr, int indent, SmartsScores *scores)
+  void PrintSmartsBondExprTree(SmartsBondExpr *expr, int indent, SmartsScores *scores)
   {
     std::string prefix = "        ";
     for (int i = 0; i < indent; ++i)
       prefix += "    ";
 
-    std::cout << prefix << "BondExpr:" << std::endl;
-    std::cout << prefix << "  Type: " << GetBondExprType(expr->type) << std::endl;
-    std::cout << prefix << "  Score: " << scores->GetExprScore(expr) << std::endl;
+    std::cout << prefix << "SmartsBondExpr:" << std::endl;
+    std::cout << prefix << "  Type: " << GetSmartsBondExprType(expr->type) << std::endl;
+    //std::cout << prefix << "  Score: " << scores->GetExprScore(expr) << std::endl; FIXME FIXME FIXME
 
     switch (expr->type) {
-      case BE_ANDHI:
-        PrintBondExprTree(expr->bin.lft, indent + 1, scores);
-        PrintBondExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_AndHi:
+        PrintSmartsBondExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsBondExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case BE_ANDLO:
-        PrintBondExprTree(expr->bin.lft, indent + 1, scores);
-        PrintBondExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_AndLo:
+        PrintSmartsBondExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsBondExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case BE_OR:
-        PrintBondExprTree(expr->bin.lft, indent + 1, scores);
-        PrintBondExprTree(expr->bin.rgt, indent + 1, scores);
+      case Smiley::OP_Or:
+        PrintSmartsBondExprTree(expr->binary.lft, indent + 1, scores);
+        PrintSmartsBondExprTree(expr->binary.rgt, indent + 1, scores);
         break;
-      case BE_NOT:
-        PrintBondExprTree(expr->mon.arg, indent + 1, scores);
+      case Smiley::OP_Not:
+        PrintSmartsBondExprTree(expr->unary.arg, indent + 1, scores);
         break;
-      case BE_ANY:
-      case BE_SINGLE:
-      case BE_DOUBLE:
-      case BE_TRIPLE:
-      case BE_AROM:
-      case BE_RING:
-      case BE_UP:
-      case BE_DOWN:
+      default:
         break;
     }
   }
 
-  void PrintAtomSpecTree(AtomSpec &as, SmartsScores *scores)
+  void PrintSmartsAtomTree(SmartsAtom &as, SmartsScores *scores)
   {
-    std::cout << "    Part: " << as.part << std::endl;
-    std::cout << "    ChiralFlag: " << as.chiral_flag << std::endl;
-    std::cout << "    VectorBinding: " << as.vb << std::endl;
+    //std::cout << "    Part: " << as.part << std::endl;
+    std::cout << "    Chiral: " << as.chiral << std::endl;
+    std::cout << "    AtomClass: " << as.atomClass << std::endl;
     std::cout << "    Neighbors: ";
-    for (std::size_t i = 0; i < as.nbrs.size(); ++i)
-      std::cout << as.nbrs[i] << " ";
-    std::cout << std::endl;
-    std::cout << "    AtomExpression(s):" << std::endl;
-    PrintAtomExprTree(as.expr, 0, scores);
+    //for (std::size_t i = 0; i < as.nbrs.size(); ++i)
+    //  std::cout << as.nbrs[i] << " ";
+    //std::cout << std::endl;
+    std::cout << "    SmartsAtomExpression(s):" << std::endl;
+    PrintSmartsAtomExprTree(as.expr, 0, scores);
   }
 
-  void PrintBondSpecTree(BondSpec &bs, SmartsScores *scores)
+  void PrintSmartsBondTree(SmartsBond &bs, SmartsScores *scores)
   {
-    std::cout << "    Src: " << bs.src << std::endl;
-    std::cout << "    Dst: " << bs.dst << std::endl;
+    std::cout << "    Source: " << bs.source << std::endl;
+    std::cout << "    Target: " << bs.target << std::endl;
     std::cout << "    Grow: " << bs.grow << std::endl;
-    std::cout << "    BondExpression(s):" << std::endl;
-    PrintBondExprTree(bs.expr, 0, scores);
+    std::cout << "    SmartsBondExpression(s):" << std::endl;
+    PrintSmartsBondExprTree(bs.expr, 0, scores);
   }
 
 
-  void PrintPatternTree(Pattern *pattern, SmartsScores *scores)
+  void PrintSmartsTree(Smarts *pattern, SmartsScores *scores)
   {
-    std::cout << "NumAtoms: " << pattern->acount << std::endl;
-    std::cout << "NumBonds: " << pattern->bcount << std::endl;
-    std::cout << "IsChiral: " << pattern->ischiral << std::endl;
-    std::cout << "NumParts: " << pattern->parts << std::endl;
-    std::cout << "ExplicitH: " << pattern->hasExplicitH << std::endl;
+    std::cout << "NumAtoms: " << pattern->atoms.size() << std::endl;
+    std::cout << "NumBonds: " << pattern->bonds.size() << std::endl;
+    std::cout << "IsChiral: " << pattern->chiral << std::endl;
+    //std::cout << "NumParts: " << pattern->parts << std::endl;
+    //std::cout << "ExplicitH: " << pattern->hasExplicitH << std::endl;
 
     std::cout << "Atom Specification(s):" << std::endl;
-    for (int i = 0; i < pattern->acount; ++i)
-      PrintAtomSpecTree(pattern->atom[i], scores);
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      PrintSmartsAtomTree(pattern->atoms[i], scores);
     std::cout << "Bond Specification(s):" << std::endl;
-    for (int i = 0; i < pattern->bcount; ++i)
-      PrintBondSpecTree(pattern->bond[i], scores);
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      PrintSmartsBondTree(pattern->bonds[i], scores);
   }
 
   std::string SuppressImplicitAndHi(const std::string &expr)
@@ -306,46 +313,46 @@ namespace SC {
     return exprCopy;
   }
 
-  std::string GetExprString(const AtomExpr *expr, bool implicitAnd)
+  std::string GetExprString(const SmartsAtomExpr *expr, bool implicitAnd)
   {
     std::string lft, rgt;
     std::stringstream ss;
     int value;
 
     switch (expr->type) {
-      case AE_ANDHI:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_AndHi:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return implicitAnd ? SuppressImplicitAndHi(lft + "&" + rgt) : lft + "&" + rgt;
-      case AE_ANDLO:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_AndLo:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return lft + ";" + rgt;
-      case AE_OR:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_Or:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return lft + "," + rgt;
-      case AE_RECUR:
+      //case Smiley::AE_RECUR:
         // FIXME
-        return "";
-      case AE_NOT:
-        lft = GetExprString(expr->mon.arg);
+      //  return "";
+      case Smiley::OP_Not:
+        lft = GetExprString(expr->unary.arg);
         return "!" + lft;
-      case AE_TRUE:
+      case Smiley::AE_True:
         return "*";
-      case AE_FALSE:
+      case Smiley::AE_False:
         return "!*";
-      case AE_AROMATIC:
+      case Smiley::AE_Aromatic:
         return "a";
-      case AE_ALIPHATIC:
+      case Smiley::AE_Aliphatic:
         return "A";
-      case AE_CYCLIC:
+      case Smiley::AE_Cyclic:
         return "R";
-      case AE_ACYCLIC:
+      case Smiley::AE_Acyclic:
         return "R0";
-      case AE_MASS:
+      case Smiley::AE_Isotope:
         return make_string(expr->leaf.value);
-      case AE_ELEM:
+      case Smiley::AE_AtomicNumber:
         switch (expr->leaf.value) {
           case 1:
           case 6:
@@ -356,9 +363,9 @@ namespace SC {
           case 34:
             return make_string("#", expr->leaf.value);
           default:
-            return etab.GetSymbol(expr->leaf.value);
+            return GetSymbol(expr->leaf.value);
         }
-      case AE_AROMELEM:
+      case Smiley::AE_AromaticElement:
         switch (expr->leaf.value) {
           case 6:
             return "c";
@@ -373,31 +380,31 @@ namespace SC {
           case 34:
             return "se";
         }
-      case AE_ALIPHELEM:
-        return etab.GetSymbol(expr->leaf.value);
-      case AE_HCOUNT:
+      case Smiley::AE_AliphaticElement:
+        return GetSymbol(expr->leaf.value);
+      case Smiley::AE_TotalH:
         return expr->leaf.value == 1 ? "H" : make_string("H", expr->leaf.value);
-      case AE_CHARGE:
+      case Smiley::AE_Charge:
         if (expr->leaf.value > 0)
           return expr->leaf.value == 1 ? "+" : make_string("+", expr->leaf.value);
         return expr->leaf.value == -1 ? "-" : make_string(expr->leaf.value);
-      case AE_CONNECT:
+      case Smiley::AE_Connectivity:
         return expr->leaf.value == 1 ? "X" : make_string("X", expr->leaf.value);
-      case AE_DEGREE:
+      case Smiley::AE_Degree:
         return expr->leaf.value == 1 ? "D" : make_string("D", expr->leaf.value);
-      case AE_IMPLICIT:
+      case Smiley::AE_ImplicitH:
         return expr->leaf.value == 1 ? "h" : make_string("h", expr->leaf.value);
-      case AE_RINGS:
+      case Smiley::AE_RingMembership:
         return make_string("R", expr->leaf.value);
-      case AE_SIZE:
+      case Smiley::AE_RingSize:
         return expr->leaf.value == 1 ? "r" : make_string("r", expr->leaf.value);
-      case AE_VALENCE:
+      case Smiley::AE_Valence:
         return expr->leaf.value == 1 ? "v" : make_string("v", expr->leaf.value);
-      case AE_CHIRAL:
+      case Smiley::AE_Chirality:
         return "";
-      case AE_HYB:
-        return expr->leaf.value == 1 ? "^" : make_string("^", expr->leaf.value);
-      case AE_RINGCONNECT:
+      //case Smiley::AE_HYB:
+      //  return expr->leaf.value == 1 ? "^" : make_string("^", expr->leaf.value);
+      case Smiley::AE_RingConnectivity:
         return expr->leaf.value == 1 ? "x" : make_string("x", expr->leaf.value);
     }
 
@@ -416,69 +423,69 @@ namespace SC {
     return implicitAnd ? SuppressImplicitAndHi(str) : str;
   }
 
-  template std::string GetBinaryExprString<AtomExpr>(const std::vector<AtomExpr*> &expr, const std::string &op, bool implicitAnd = true);
+  template std::string GetBinaryExprString<SmartsAtomExpr>(const std::vector<SmartsAtomExpr*> &expr, const std::string &op, bool implicitAnd = true);
 
-  std::string GetExprString(const BondExpr *expr, bool implicitAnd)
+  std::string GetExprString(const SmartsBondExpr *expr, bool implicitAnd)
   {
     std::string lft, rgt;
 
     switch (expr->type) {
-      case BE_ANDHI:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_AndHi:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return implicitAnd ? lft + rgt : lft + "&" + rgt;
-      case BE_ANDLO:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_AndLo:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return lft + ";" + rgt;
-      case BE_OR:
-        lft = GetExprString(expr->bin.lft);
-        rgt = GetExprString(expr->bin.rgt);
+      case Smiley::OP_Or:
+        lft = GetExprString(expr->binary.lft);
+        rgt = GetExprString(expr->binary.rgt);
         return lft + "," + rgt;
-      case BE_NOT:
-        lft = GetExprString(expr->mon.arg);
+      case Smiley::OP_Not:
+        lft = GetExprString(expr->unary.arg);
         return "!" + lft;
-      case BE_DEFAULT:
-        return "";
-      case BE_ANY:
+      //case Smiley::BE_DEFAULT:
+      //  return "";
+      case Smiley::BE_True:
         return "~";
-      case BE_SINGLE:
+      case Smiley::BE_Single:
         return "-";
-      case BE_DOUBLE:
+      case Smiley::BE_Double:
         return "=";
-      case BE_TRIPLE:
+      case Smiley::BE_Triple:
         return "#";
-      case BE_AROM:
+      case Smiley::BE_Aromatic:
         return ":";
-      case BE_RING:
+      case Smiley::BE_Ring:
         return "@";
     }
 
     return "<?>";
   }
 
-  void PrintPattern(Pattern *pattern, SmartsScores *scores)
+  void PrintSmarts(Smarts *pattern, SmartsScores *scores)
   {
     std::cout << "Expressions:" << std::endl;
-    for (int i = 0; i < pattern->acount; ++i)
-      std::cout << GetExprString(pattern->atom[i].expr) << "   score: " << scores->GetExprScore(pattern->atom[i].expr) << std::endl;
-    for (int i = 0; i < pattern->bcount; ++i) {
-      std::string result = GetExprString(pattern->bond[i].expr);
-      if (result.size())
-        std::cout << result << "   score: " << scores->GetExprScore(pattern->bond[i].expr) << std::endl;
+    //for (int i = 0; i < pattern->atoms.size(); ++i)
+    //  std::cout << GetExprString(pattern->atoms[i].expr) << "   score: " << /*scores->GetExprScore(pattern->atoms[i].expr)*/ << std::endl;
+    for (int i = 0; i < pattern->bonds.size(); ++i) {
+      std::string result = GetExprString(pattern->bonds[i].expr);
+      //if (result.size())
+      //  std::cout << result << "   score: " << /*scores->GetExprScore(pattern->bonds[i].expr)*/ << std::endl;
     }
-    if (pattern->bcount) {
+    if (pattern->bonds.size()) {
       std::cout << "Bonds:" << std::endl;
-      for (int i = 0; i < pattern->bcount; ++i)
-        std::cout << pattern->bond[i].src << "\t" << pattern->bond[i].dst << std::endl;
+      for (int i = 0; i < pattern->bonds.size(); ++i)
+        std::cout << pattern->bonds[i].source << "\t" << pattern->bonds[i].target << std::endl;
     }
   }
 
-  void PrintEnvironmentScores(Pattern *pattern, SmartsScores *scores)
+  void PrintEnvironmentScores(Smarts *pattern, SmartsScores *scores)
   {
     std::cout << "Atom Expressions:" << std::endl;
-    for (int i = 0; i < pattern->acount; ++i)
-      std::cout << scores->GetExprEnvironmentScore(pattern, pattern->atom[i].expr, 1000) << std::endl;
+    //for (int i = 0; i < pattern->atoms.size(); ++i)
+    //  std::cout << /*scores->GetExprEnvironmentScore(pattern, pattern->atoms[i].expr, 1000)*/ << std::endl;
   }
 
 }

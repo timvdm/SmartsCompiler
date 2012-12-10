@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#ifdef _MSC_VER
+#ifdef _MVER
 #define FUNCTION_SIGNATURE __FUNCSIG__
 #else
 #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
@@ -15,20 +15,20 @@
 }
 
 template <typename T1, typename T2>
-void smartscompiler_compare(T1 a, T2 b, const char *expr, const char *file, int line, const char *func_name)
+void ___test_compare(T1 a, T2 b, const char *expr, const char *file, int line, const char *func_name)
 {
   if (!(a == b))
     std::cout << file << ":" << line << ": " << expr << " [" << a << " == " << b << "] (FAIL)" << std::endl;
 }
 
-#define SC_ASSERT(exp) \
+#define ASSERT(exp) \
   ( (exp) ? static_cast<void>(0) : report_error(#exp, __FILE__, __LINE__, FUNCTION_SIGNATURE, false) )
 
-#define SC_REQUIRE(exp) \
+#define REQUIRE(exp) \
   ( (exp) ? static_cast<void>(0) : report_error(#exp, __FILE__, __LINE__, FUNCTION_SIGNATURE, true) )
 
-const char* smartscompiler_expr(const char *expr) { return expr; }
-#define SC_EXPR(expr) smartscompiler_expr(#expr)
+const char* ___test_expr(const char *expr) { return expr; }
+#define EXPR(expr) ___test_expr(#expr)
 
-#define SC_COMPARE(a,b) \
-  smartscompiler_compare(a, b, SC_EXPR( a == b ), __FILE__, __LINE__, FUNCTION_SIGNATURE)
+#define COMPARE(a,b) \
+  ___test_compare(a, b, EXPR( a == b ), __FILE__, __LINE__, FUNCTION_SIGNATURE)

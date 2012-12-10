@@ -1,10 +1,9 @@
 #ifndef SC_SMARTSOPTIMIZER_H
 #define SC_SMARTSOPTIMIZER_H
 
-#include <openbabel/parsmart.h>
-
 namespace SC {
 
+  class Smarts;
   class SmartsScores;
 
   /**
@@ -53,7 +52,7 @@ namespace SC {
       {
       }
 
-      void Optimize(OpenBabel::Pattern *pattern, int opts = O5);
+      void Optimize(Smarts *smarts, int opts = O5);
 
     private:
       SmartsScores *m_scores;

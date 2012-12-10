@@ -279,28 +279,6 @@ namespace SC {
       OpenBabel::OBBond *m_bond;
   };
 
-
-#ifdef HAVE_PYTHON
-  template<>
-  bool PythonSmartsPattern::CallEvalAtomExpr<OpenBabel::OBAtom>(int index, OpenBabel::OBAtom *atom) const
-  {
-    //std::cout << "PyCallable_Check: " << PyCallable_Check(EvalAtomExpr) << std::endl;
-    //std::cout << "PyFunction_Check: " << PyFunction_Check(EvalAtomExpr) << std::endl;
-    PyObject *result = PyEval_CallFunction(EvalAtomExpr, "ii", index, atom->GetIdx());
-    //std::cout << "PyBool_Check: " << PyBool_Check(result) << std::endl;
-    PyErr_Print();
-    return result == Py_True;
-  }
-
-  template<>
-  bool PythonSmartsPattern::CallEvalBondExpr<OpenBabel::OBBond>(int index, OpenBabel::OBBond *bond) const
-  {
-    PyObject *result = PyEval_CallFunction(EvalBondExpr, "ii", index, bond->GetIdx());
-    PyErr_Print();
-    return result == Py_True;
-  }
-#endif
-
   typedef SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> OpenBabelSmartsPattern;
 
 }

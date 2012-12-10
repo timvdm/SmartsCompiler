@@ -52,12 +52,13 @@ set(libsmartscompiler_hdrs
   )
 
 set(libsmartscompiler_srcs
-    src/openbabel.cpp
-    src/smartsmatcher.cpp
+    #    src/openbabel.cpp
+    #    src/smartsmatcher.cpp
     src/smartsscores.cpp
     src/smartsoptimizer.cpp
-    src/smartscodegenerator.cpp
+    #    src/smartscodegenerator.cpp
     src/smartsprint.cpp
+    src/smarts.cpp
 )
 
 add_library(smartscompiler SHARED ${libsmartscompiler_srcs})
@@ -67,7 +68,7 @@ install(TARGETS smartscompiler
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib)
 
-add_subdirectory(tools)
+              #add_subdirectory(tools)
 
 
 

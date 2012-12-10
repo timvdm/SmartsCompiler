@@ -5,10 +5,6 @@
 
 #include <vector>
 
-#ifdef HAVE_PYTHON
-#include <Python.h>
-#endif
-
 namespace SC {
 
   enum SmartsExprType

@@ -1,5 +1,5 @@
 #include "../src/smartsscores.h"
-#include "../src/smartsmatcher.h"
+#include "../src/smarts.h"
 #include "../src/smartsprint.h"
 
 #include "test.h"
@@ -13,21 +13,19 @@ bool TestAtomScoreSort(const std::string &expr, const std::string &correct, Smar
 
   std::cout << "Test: " << expr << " -> " << correct << "" << std::endl;
 
-  OpenBabelSmartsMatcher matcher;
-  matcher.Init(expr);
-  OpenBabel::Pattern *pattern = matcher.GetPattern();
+  Smarts *pattern = parse(expr);
 
-  std::vector<OpenBabel::AtomExpr*> atoms;
-  for (int i = 0; i < pattern->acount; ++i)
-    atoms.push_back(pattern->atom[i].expr);
+  std::vector<SmartsAtomExpr*> atoms;
+  for (int i = 0; i < pattern->atoms.size(); ++i)
+    atoms.push_back(pattern->atoms[i].expr);
 
   scores.Sort(atoms, increasing);
 
   std::string result;
-  for (int i = 0; i < pattern->acount; ++i)
+  for (int i = 0; i < pattern->atoms.size(); ++i)
     result += GetExprString(atoms[i]);
 
-  SC_COMPARE(result, correct);
+  COMPARE(result, correct);
 
   return result == correct;
 }
@@ -36,6 +34,6 @@ int main()
 {
   PrettySmartsScores scores;
 
-  SC_ASSERT(TestAtomScoreSort("CO", "CO", scores, true));
-  SC_ASSERT(TestAtomScoreSort("OC", "CO", scores, true));
+  ASSERT(TestAtomScoreSort("CO", "CO", scores, true));
+  ASSERT(TestAtomScoreSort("OC", "CO", scores, true));
 }

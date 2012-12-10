@@ -6,8 +6,6 @@
 
 namespace SC {
 
-  using namespace OpenBabel;
-
   /**
    * Double negation.
    *
@@ -19,16 +17,16 @@ namespace SC {
   Expr* DoubleNegation(Expr *expr)
   {
     if (IsNot(expr)) {
-      if (IsNot(expr->mon.arg)) {
-        Expr *tmp = expr->mon.arg->mon.arg;
-        delete expr->mon.arg;
+      if (IsNot(expr->unary.arg)) {
+        Expr *tmp = expr->unary.arg->unary.arg;
+        delete expr->unary.arg;
         delete expr;
         expr = DoubleNegation(tmp);
         return expr;
       }
     } else if (!IsLeaf(expr)) {
-      expr->bin.lft = DoubleNegation(expr->bin.lft);
-      expr->bin.rgt = DoubleNegation(expr->bin.rgt);      
+      expr->binary.lft = DoubleNegation(expr->binary.lft);
+      expr->binary.rgt = DoubleNegation(expr->binary.rgt);      
     }
     return expr;
   }
@@ -45,44 +43,44 @@ namespace SC {
   template<typename Expr>
   Expr* TrueElimination(Expr *expr)
   {
-    if (SameType<Expr, BondExpr>::result)
+    if (SameType<Expr, SmartsBondExpr>::result)
       return expr;
 
-    if (expr->type == AE_ANDHI || expr->type == AE_ANDLO) {
-      if (expr->bin.lft->type == AE_TRUE) {
-        Expr *tmp = expr->bin.rgt;
-        DeleteExpr(expr->bin.lft);
+    if (expr->type == Smiley::OP_AndHi || expr->type == Smiley::OP_AndLo) {
+      if (expr->binary.lft->type == Smiley::AE_True) {
+        Expr *tmp = expr->binary.rgt;
+        DeleteExpr(expr->binary.lft);
         delete expr;
         tmp = TrueElimination(tmp);
         return tmp;
       }
-      if (expr->bin.rgt->type == AE_TRUE) {
-        Expr *tmp = expr->bin.lft;
-        DeleteExpr(expr->bin.rgt);
+      if (expr->binary.rgt->type == Smiley::AE_True) {
+        Expr *tmp = expr->binary.lft;
+        DeleteExpr(expr->binary.rgt);
         delete expr;
         tmp = TrueElimination(tmp);
         return tmp;
       }
-      expr->bin.lft = TrueElimination(expr->bin.lft);
-      expr->bin.rgt = TrueElimination(expr->bin.rgt);
+      expr->binary.lft = TrueElimination(expr->binary.lft);
+      expr->binary.rgt = TrueElimination(expr->binary.rgt);
     }
-    if (expr->type == AE_OR) {
-      if (expr->bin.lft->type == AE_TRUE) {
-        Expr *tmp = expr->bin.lft;
-        DeleteExpr(expr->bin.rgt);
+    if (expr->type == Smiley::OP_Or) {
+      if (expr->binary.lft->type == Smiley::AE_True) {
+        Expr *tmp = expr->binary.lft;
+        DeleteExpr(expr->binary.rgt);
         delete expr;
         tmp = TrueElimination(tmp);
         return tmp;
       }
-      if (expr->bin.rgt->type == AE_TRUE) {
-        Expr *tmp = expr->bin.rgt;
-        DeleteExpr(expr->bin.lft);
+      if (expr->binary.rgt->type == Smiley::AE_True) {
+        Expr *tmp = expr->binary.rgt;
+        DeleteExpr(expr->binary.lft);
         delete expr;
         tmp = TrueElimination(tmp);
         return tmp;
       }
-      expr->bin.lft = TrueElimination(expr->bin.lft);
-      expr->bin.rgt = TrueElimination(expr->bin.rgt);
+      expr->binary.lft = TrueElimination(expr->binary.lft);
+      expr->binary.rgt = TrueElimination(expr->binary.rgt);
     }
     return expr;
   }
@@ -99,44 +97,44 @@ namespace SC {
   template<typename Expr>
   Expr* FalseElimination(Expr *expr)
   {
-    if (SameType<Expr, BondExpr>::result)
+    if (SameType<Expr, SmartsBondExpr>::result)
       return expr;
 
     if (IsAnd(expr)) {
-      if (expr->bin.lft->type == AE_FALSE) {
-        Expr *tmp = expr->bin.lft;
-        DeleteExpr(expr->bin.rgt);
+      if (expr->binary.lft->type == Smiley::AE_False) {
+        Expr *tmp = expr->binary.lft;
+        DeleteExpr(expr->binary.rgt);
         delete expr;
         tmp = FalseElimination(tmp);
         return tmp;
       }
-      if (expr->bin.rgt->type == AE_FALSE) {
-        Expr *tmp = expr->bin.rgt;
-        DeleteExpr(expr->bin.lft);
+      if (expr->binary.rgt->type == Smiley::AE_False) {
+        Expr *tmp = expr->binary.rgt;
+        DeleteExpr(expr->binary.lft);
         delete expr;
         tmp = FalseElimination(tmp);
         return tmp;
       }
-      expr->bin.lft = FalseElimination(expr->bin.lft);
-      expr->bin.rgt = FalseElimination(expr->bin.rgt);
+      expr->binary.lft = FalseElimination(expr->binary.lft);
+      expr->binary.rgt = FalseElimination(expr->binary.rgt);
     }
     if (IsOr(expr)) {
-      if (expr->bin.lft->type == AE_FALSE) {
-        Expr *tmp = expr->bin.rgt;
-        DeleteExpr(expr->bin.lft);
+      if (expr->binary.lft->type == Smiley::AE_False) {
+        Expr *tmp = expr->binary.rgt;
+        DeleteExpr(expr->binary.lft);
         delete expr;
         tmp = FalseElimination(tmp);
         return tmp;
       }
-      if (expr->bin.rgt->type == AE_FALSE) {
-        Expr *tmp = expr->bin.lft;
-        DeleteExpr(expr->bin.rgt);
+      if (expr->binary.rgt->type == Smiley::AE_False) {
+        Expr *tmp = expr->binary.lft;
+        DeleteExpr(expr->binary.rgt);
         delete expr;
         tmp = FalseElimination(tmp);
         return tmp;
       }
-      expr->bin.lft = FalseElimination(expr->bin.lft);
-      expr->bin.rgt = FalseElimination(expr->bin.rgt);
+      expr->binary.lft = FalseElimination(expr->binary.lft);
+      expr->binary.rgt = FalseElimination(expr->binary.rgt);
     }
     return expr;
   }
@@ -151,16 +149,16 @@ namespace SC {
   Expr* DuplicateElimination(Expr *expr)
   {
     if (IsAnd(expr) || IsOr(expr)) {
-      if (IsDuplicate(expr->bin.lft, expr->bin.rgt)) {
-        Expr *tmp = expr->bin.lft;
-        DeleteExpr(expr->bin.rgt);
+      if (IsDuplicate(expr->binary.lft, expr->binary.rgt)) {
+        Expr *tmp = expr->binary.lft;
+        DeleteExpr(expr->binary.rgt);
         delete expr;
         tmp = DuplicateElimination(tmp);
         return tmp;
       }
 
-      expr->bin.lft = DuplicateElimination(expr->bin.lft);
-      expr->bin.rgt = DuplicateElimination(expr->bin.rgt);
+      expr->binary.lft = DuplicateElimination(expr->binary.lft);
+      expr->binary.rgt = DuplicateElimination(expr->binary.rgt);
     }
     return expr;
   }
@@ -178,39 +176,39 @@ namespace SC {
   template<typename Expr>
   Expr* Negation(Expr *expr)
   {
-    if (SameType<Expr, BondExpr>::result)
+    if (SameType<Expr, SmartsBondExpr>::result)
       return expr;
 
     if (IsBinary(expr)) {
-      expr->bin.lft = Negation(expr->bin.lft);
-      expr->bin.rgt = Negation(expr->bin.rgt);
+      expr->binary.lft = Negation(expr->binary.lft);
+      expr->binary.rgt = Negation(expr->binary.rgt);
     }
     if (IsNot(expr)) {
-      if (IsLeaf(expr->mon.arg) && !IsValued(expr->mon.arg)) {
-        Expr *tmp = expr->mon.arg;
+      if (IsLeaf(expr->unary.arg) && !IsValued(expr->unary.arg)) {
+        Expr *tmp = expr->unary.arg;
         delete expr;
         switch (tmp->type) {
-          case AE_TRUE:
-            tmp->type = AE_FALSE;
+          case Smiley::AE_True:
+            tmp->type = Smiley::AE_False;
             return tmp;
-          case AE_FALSE:
-            tmp->type = AE_TRUE;
+          case Smiley::AE_False:
+            tmp->type = Smiley::AE_True;
             return tmp;
-          case AE_AROMATIC:
-            tmp->type = AE_ALIPHATIC;
+          case Smiley::AE_Aromatic:
+            tmp->type = Smiley::AE_Aliphatic;
             return tmp;
-          case AE_ALIPHATIC:
-            tmp->type = AE_AROMATIC;
+          case Smiley::AE_Aliphatic:
+            tmp->type = Smiley::AE_Aromatic;
             return tmp;
-          case AE_CYCLIC:
-            tmp->type = AE_ACYCLIC;
+          case Smiley::AE_Cyclic:
+            tmp->type = Smiley::AE_Acyclic;
             return tmp;
-          case AE_ACYCLIC:
-            tmp->type = AE_CYCLIC;
+          case Smiley::AE_Acyclic:
+            tmp->type = Smiley::AE_Cyclic;
             return tmp;        
         }
       }
-      expr->mon.arg = Negation(expr->mon.arg);
+      expr->unary.arg = Negation(expr->unary.arg);
     }
     return expr;
   }
@@ -250,17 +248,17 @@ namespace SC {
   {
     if (expr1 == expr2)
       return false;
-    if (expr1->type == AE_ELEM && expr2->type == AE_ALIPHATIC) {
-      expr1->type = AE_ALIPHELEM;
+    if (expr1->type == Smiley::AE_AtomicNumber && expr2->type == Smiley::AE_Aliphatic) {
+      expr1->type = Smiley::AE_AliphaticElement;
       return true;
     }
-    if (expr1->type == AE_ELEM && expr2->type == AE_AROMATIC) {
-      expr1->type = AE_AROMELEM;
+    if (expr1->type == Smiley::AE_AtomicNumber && expr2->type == Smiley::AE_Aromatic) {
+      expr1->type = Smiley::AE_AromaticElement;
       return true;
     }
-    if (expr1->type == AE_AROMELEM && expr2->type == AE_AROMATIC)
+    if (expr1->type == Smiley::AE_AromaticElement && expr2->type == Smiley::AE_Aromatic)
       return true;
-    if (expr1->type == AE_ALIPHELEM && expr2->type == AE_ALIPHATIC)
+    if (expr1->type == Smiley::AE_AliphaticElement && expr2->type == Smiley::AE_Aliphatic)
       return true;
     return false;
   }
@@ -268,7 +266,7 @@ namespace SC {
   template<typename Expr>
   void AromAliphAndContraction(std::vector<Expr*> &same, std::vector<Expr*> &other)
   {
-    if (SameType<Expr, BondExpr>::result)
+    if (SameType<Expr, SmartsBondExpr>::result)
       return;
 
     std::vector<std::size_t> remove;
@@ -285,12 +283,12 @@ namespace SC {
   {
     if (expr1 == expr2)
       return false;
-    if (expr1->type == AE_ALIPHATIC && expr2->type == AE_ALIPHELEM)
+    if (expr1->type == Smiley::AE_Aliphatic && expr2->type == Smiley::AE_AliphaticElement)
       return true;
-    if (expr1->type == AE_AROMATIC && expr2->type == AE_AROMELEM)
+    if (expr1->type == Smiley::AE_Aromatic && expr2->type == Smiley::AE_AromaticElement)
       return true;
-    if (expr1->type == AE_ALIPHATIC && expr2->type == AE_AROMATIC) {
-      expr1->type = AE_TRUE;
+    if (expr1->type == Smiley::AE_Aliphatic && expr2->type == Smiley::AE_Aromatic) {
+      expr1->type = Smiley::AE_True;
       return true;
     }
     return false;
@@ -299,7 +297,7 @@ namespace SC {
   template<typename Expr>
   void AromAliphOrContraction(std::vector<Expr*> &same, std::vector<Expr*> &other)
   {
-    if (SameType<Expr, BondExpr>::result)
+    if (SameType<Expr, SmartsBondExpr>::result)
       return;
 
     std::vector<std::size_t> remove;
@@ -311,56 +309,56 @@ namespace SC {
     RemoveExpressions(remove, same, other);
   }
 
-  bool IsAndRedundant(AtomExpr *expr1, AtomExpr *expr2)
+  bool IsAndRedundant(SmartsAtomExpr *expr1, SmartsAtomExpr *expr2)
   {
     if (expr1 == expr2)
       return false;
     // e.g. [C!N] [X2!X3] [R3!R2] ...
-    if (IsUnique(expr1) && expr2->type == AE_NOT && expr1->type == expr2->mon.arg->type)
-      return expr1->leaf.value != expr2->mon.arg->leaf.value;
+    if (IsUnique(expr1) && expr2->type == Smiley::OP_Not && expr1->type == expr2->unary.arg->type)
+      return expr1->leaf.value != expr2->unary.arg->leaf.value;
     // e.g. [F!#6] = F
-    if (expr1->type == AE_ALIPHELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_ELEM)
+    if (expr1->type == Smiley::AE_AliphaticElement && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AtomicNumber)
       return true;
     // e.g. [F!n] = F
-    if (expr1->type == AE_ALIPHELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_AROMELEM)
+    if (expr1->type == Smiley::AE_AliphaticElement && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AromaticElement)
       return true;
     // e.g. [n!#8] = n
-    if (expr1->type == AE_AROMELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_ELEM)
+    if (expr1->type == Smiley::AE_AromaticElement && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AtomicNumber)
       return true;
     // e.g. [o!C] = o
-    if (expr1->type == AE_AROMELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_ALIPHELEM)
+    if (expr1->type == Smiley::AE_AromaticElement && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AliphaticElement)
       return true;
     // e.g. [#6!N] = [#6]
-    if (expr1->type == AE_ELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_ALIPHELEM)
+    if (expr1->type == Smiley::AE_AtomicNumber && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AliphaticElement)
       return true;
     // e.g. [#7!o] = [#7]
-    if (expr1->type == AE_ELEM && expr2->type == AE_NOT && expr2->mon.arg->type == AE_AROMELEM)
+    if (expr1->type == Smiley::AE_AtomicNumber && expr2->type == Smiley::OP_Not && expr2->unary.arg->type == Smiley::AE_AromaticElement)
       return true;
     // e.g. [aR] = [a]
-    if (expr1->type == AE_AROMATIC && expr2->type == AE_CYCLIC)
+    if (expr1->type == Smiley::AE_Aromatic && expr2->type == Smiley::AE_Cyclic)
       return true;
     // e.g. [RR2] = [R2]
-    if (expr1->type == AE_RINGS && expr2->type == AE_CYCLIC)
+    if (expr1->type == Smiley::AE_RingMembership && expr2->type == Smiley::AE_Cyclic)
       return true;
     // e.g. [Rr6] = [r6]
-    if (expr1->type == AE_SIZE && expr2->type == AE_CYCLIC)
+    if (expr1->type == Smiley::AE_RingSize && expr2->type == Smiley::AE_Cyclic)
       return true;
     // e.g. [Rx3] = [x3]
-    if (expr1->type == AE_RINGCONNECT && expr2->type == AE_CYCLIC)
+    if (expr1->type == Smiley::AE_RingConnectivity && expr2->type == Smiley::AE_Cyclic)
       return true;
     return false;
   }
 
-  bool IsAndRedundant(BondExpr *expr1, BondExpr *expr2)
+  bool IsAndRedundant(SmartsBondExpr *expr1, SmartsBondExpr *expr2)
   {
     if (expr1 == expr2)
       return false;
     // e.g. C~=C = C=C
     //      C~@C = C@C
-    if ((IsBondOrderExpr(expr1) || expr1->type == BE_RING) && expr2->type == BE_ANY)
+    if ((IsBondOrderExpr(expr1) || expr1->type == Smiley::BE_Ring) && expr2->type == Smiley::BE_True)
       return true;
     // e.g. C-!=C C-!#C C-!:C
-    if (IsBondOrderExpr(expr1) && expr2->type == BE_NOT && IsBondOrderExpr(expr2->mon.arg) && !IsSameType(expr1, expr2->mon.arg))
+    if (IsBondOrderExpr(expr1) && expr2->type == Smiley::OP_Not && IsBondOrderExpr(expr2->unary.arg) && !IsSameType(expr1, expr2->unary.arg))
       return true;
     return false;
   }
@@ -377,23 +375,23 @@ namespace SC {
     RemoveExpressions(remove, same, other);
   }
 
-  bool IsOrRedundant(AtomExpr *expr1, AtomExpr *expr2)
+  bool IsOrRedundant(SmartsAtomExpr *expr1, SmartsAtomExpr *expr2)
   {
     if (expr1 == expr2)
       return false;
     // e.g. [R,R2] [R,r6] [R,x2]
-    if (expr1->type == AE_CYCLIC && (expr2->type == AE_RINGS || expr2->type == AE_SIZE || expr2->type == AE_RINGCONNECT))
+    if (expr1->type == Smiley::AE_Cyclic && (expr2->type == Smiley::AE_RingMembership || expr2->type == Smiley::AE_RingSize || expr2->type == Smiley::AE_RingConnectivity))
       return true;
     return false;
   }
 
-  bool IsOrRedundant(BondExpr *expr1, BondExpr *expr2)
+  bool IsOrRedundant(SmartsBondExpr *expr1, SmartsBondExpr *expr2)
   {
     if (expr1 == expr2)
       return false;
     // e.g. C~,=C = C~C
     //      C~,@C = C~C
-    if (expr1->type == BE_ANY && (IsBondOrderExpr(expr2) || expr2->type == BE_RING))
+    if (expr1->type == Smiley::BE_True && (IsBondOrderExpr(expr2) || expr2->type == Smiley::BE_Ring))
       return true;
     return false;
   }
@@ -440,22 +438,22 @@ namespace SC {
       if (same.empty())
         return other[0];
       if (same.size() == 1) {
-        expr->bin.lft = other[0];
-        expr->bin.rgt = other[1];
-        expr->bin.lft = OptimizeBinaryExpr1(expr->bin.lft, scores);
-        expr->bin.rgt = OptimizeBinaryExpr1(expr->bin.rgt, scores);
+        expr->binary.lft = other[0];
+        expr->binary.rgt = other[1];
+        expr->binary.lft = OptimizeBinaryExpr1(expr->binary.lft, scores);
+        expr->binary.rgt = OptimizeBinaryExpr1(expr->binary.rgt, scores);
         return expr;
       }
       //assert(same.size() == other.size() || same.size() + 1 == other.size());
 
       // make a chain from all same expressions to the right
       for (std::size_t i = 1; i < same.size(); ++i)
-        same[i - 1]->bin.rgt = same[i];
+        same[i - 1]->binary.rgt = same[i];
       // assign sorted other expressions to left children
       for (std::size_t i = 0; i < same.size(); ++i) {
-        same[i]->bin.lft = other[i];
+        same[i]->binary.lft = other[i];
         if (i + 1 == same.size() && same.size() + 1 == other.size())
-          same[i]->bin.rgt = other[i + 1];        
+          same[i]->binary.rgt = other[i + 1];        
       }
       // optimize other
       for (std::size_t i = 0; i < other.size(); ++i)
@@ -463,7 +461,7 @@ namespace SC {
     }
 
     if (IsUnary(expr))
-      expr->mon.arg = OptimizeBinaryExpr1(expr->mon.arg, scores);
+      expr->unary.arg = OptimizeBinaryExpr1(expr->unary.arg, scores);
 
     return expr;
   }
@@ -475,24 +473,24 @@ namespace SC {
   void OptimizeBinaryExpr2(Expr *expr, SmartsScores *scores)
   {
     if (IsBinary(expr)) {
-      double lftScore = scores->GetExprScore(expr->bin.lft);
-      double rgtScore = scores->GetExprScore(expr->bin.rgt);
+      double lftScore = scores->GetExprScore(expr->binary.lft);
+      double rgtScore = scores->GetExprScore(expr->binary.rgt);
 
       std::vector<Expr*> children(2);
-      children[0] = expr->bin.lft;
-      children[1] = expr->bin.rgt;
+      children[0] = expr->binary.lft;
+      children[1] = expr->binary.rgt;
       scores->Sort(children, IsAnd(expr));
-      expr->bin.lft = children[0];
-      expr->bin.rgt = children[1];
+      expr->binary.lft = children[0];
+      expr->binary.rgt = children[1];
 
-      if (!IsLeaf(expr->bin.lft))
-        OptimizeBinaryExpr2(expr->bin.lft, scores);
-      if (!IsLeaf(expr->bin.rgt))
-        OptimizeBinaryExpr2(expr->bin.rgt, scores);
+      if (!IsLeaf(expr->binary.lft))
+        OptimizeBinaryExpr2(expr->binary.lft, scores);
+      if (!IsLeaf(expr->binary.rgt))
+        OptimizeBinaryExpr2(expr->binary.rgt, scores);
     }
 
     if (IsUnary(expr))
-      OptimizeBinaryExpr2(expr->mon.arg, scores);
+      OptimizeBinaryExpr2(expr->unary.arg, scores);
   }
 
   template<typename Expr>
@@ -511,15 +509,15 @@ namespace SC {
         binaries.pop_back();
         binary->type = type;
         if (append)
-          append->bin.rgt = binary;
+          append->binary.rgt = binary;
         else
           root = append = binary;
         // assign the left 
-        binary->bin.lft = children[i];
+        binary->binary.lft = children[i];
         append = binary;
       } else {
         // assign last children expression to right
-        append->bin.rgt = children[i];            
+        append->binary.rgt = children[i];            
       }
     }
     return root; 
@@ -629,7 +627,7 @@ namespace SC {
       // create not_intersection tree
       int type = expr->type;
       if (IsAnd(expr))
-        type = SameType<Expr, AtomExpr>::result ? AE_ANDLO : BE_ANDLO;
+        type = SameType<Expr, SmartsAtomExpr>::result ? Smiley::OP_AndLo : Smiley::OP_AndLo;
       Expr *not_intersection_tree = CreateExprTree(type, binaries, not_intersection_trees);
       //if (not_intersection_tree)
       //std::cout << "not_intersection_tree = " << GetExprString(not_intersection_tree) << std::endl;
@@ -644,27 +642,27 @@ namespace SC {
         Expr *binary = binaries.back();
         binaries.pop_back();
         binary->type = GetOppositeBinaryExprType(expr);
-        binary->bin.lft = factorized_tree;
-        binary->bin.rgt = not_intersection_tree;
-        expr->bin.lft = binary;
-        expr->bin.rgt = not_opposite_tree;
+        binary->binary.lft = factorized_tree;
+        binary->binary.rgt = not_intersection_tree;
+        expr->binary.lft = binary;
+        expr->binary.rgt = not_opposite_tree;
       } else if (not_intersection_tree) {
         expr->type = GetOppositeBinaryExprType(expr);
-        expr->bin.lft = factorized_tree;
-        expr->bin.rgt = not_intersection_tree;
+        expr->binary.lft = factorized_tree;
+        expr->binary.rgt = not_intersection_tree;
       } else if (not_opposite_tree) {
         expr->type = GetOppositeBinaryExprType(expr);
-        expr->bin.lft = factorized_tree;
-        expr->bin.rgt = not_opposite_tree;
+        expr->binary.lft = factorized_tree;
+        expr->binary.rgt = not_opposite_tree;
       } else {
-        expr->bin.lft = factorized_tree;
+        expr->binary.lft = factorized_tree;
         // hack... :)
         Expr *tmp = duplicates.back();
         duplicates.pop_back();
         if (IsNot(tmp))
-          delete tmp->mon.arg;
-        tmp->type = SameType<Expr, AtomExpr>::result ? AE_TRUE : BE_ANY;
-        expr->bin.rgt = tmp;
+          delete tmp->unary.arg;
+        tmp->type = SameType<Expr, SmartsAtomExpr>::result ? Smiley::AE_True : Smiley::BE_True;
+        expr->binary.rgt = tmp;
       }
 
       //std::cout << "expr = " << GetExprString(expr) << std::endl;
@@ -678,7 +676,7 @@ namespace SC {
     }
 
     if (IsUnary(expr))
-      ExprFactorization(expr->mon.arg);
+      ExprFactorization(expr->unary.arg);
   }
 
   template<typename Expr>
@@ -708,80 +706,75 @@ namespace SC {
     return expr;
   }
 
-  void FalsePropagation(Pattern *pattern)
+  void FalsePropagation(Smarts *pattern)
   {
     // delete the expressions
-    for (int i = 0; i < pattern->acount; ++i)
-      DeleteExpr(pattern->atom[i].expr);
-    for (int i = 0; i < pattern->bcount; ++i)
-      DeleteExpr(pattern->bond[i].expr);
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      DeleteExpr(pattern->atoms[i].expr);
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      DeleteExpr(pattern->bonds[i].expr);
     // reset counts
-    pattern->acount = 1;
-    pattern->bcount = 0;
-    // delete specs
-    delete [] pattern->atom;
-    delete [] pattern->bond;
+    pattern->atoms.clear();
+    pattern->bonds.clear();
     // create single atom false spec
-    pattern->atom = new AtomSpec[1];
-    pattern->atom[0].part = 0;
-    pattern->atom[0].chiral_flag = 0;
-    pattern->atom[0].vb = 0;
-    pattern->atom[0].expr = new AtomExpr;
-    pattern->atom[0].expr->type = AE_FALSE;
-    pattern->bond = 0;
+    pattern->atoms.resize(1);
+    //pattern->atoms[0].part = 0;
+    pattern->atoms[0].chiral = 0;
+    pattern->atoms[0].atomClass = 0;
+    pattern->atoms[0].expr = new SmartsAtomExpr(Smiley::AE_False);
   }
 
-  void AtomFalsePropagation(Pattern *pattern)
+  void AtomFalsePropagation(Smarts *pattern)
   {
-    for (int i = 0; i < pattern->acount; ++i)
-      if (pattern->atom[i].expr->type == AE_FALSE) {
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      if (pattern->atoms[i].expr->type == Smiley::AE_False) {
         FalsePropagation(pattern);
         return;
       }
   }
 
-  void BondFalsePropagation(Pattern *pattern)
+  void BondFalsePropagation(Smarts *pattern)
   {
-    for (int i = 0; i < pattern->bcount; ++i)
-      if (pattern->bond[i].expr->type == BE_NOT)
-        if (pattern->bond[i].expr->mon.arg->type == BE_ANY) {
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      if (pattern->bonds[i].expr->type == Smiley::OP_Not)
+        if (pattern->bonds[i].expr->unary.arg->type == Smiley::BE_True) {
           FalsePropagation(pattern);
           return;
         }
   }
 
-  bool IsOpposite(AtomExpr *expr1, AtomExpr *expr2)
+  bool IsOpposite(SmartsAtomExpr *expr1, SmartsAtomExpr *expr2)
   {
-    if (expr2->type == AE_NOT && expr1->type == expr2->mon.arg->type) {
+    if (expr2->type == Smiley::OP_Not && expr1->type == expr2->unary.arg->type) {
       if (IsValued(expr1)) {
         if (IsUnique(expr1))
-          return expr1->leaf.value == expr2->mon.arg->leaf.value;
+          return expr1->leaf.value == expr2->unary.arg->leaf.value;
         return false;
       }
       return true;      
     }
-    if (expr1->type == AE_NOT && expr2->type == expr1->mon.arg->type) {
+    if (expr1->type == Smiley::OP_Not && expr2->type == expr1->unary.arg->type) {
       if (IsValued(expr2)) {
         if (IsUnique(expr2))
-          return expr2->leaf.value == expr1->mon.arg->leaf.value;
+          return expr2->leaf.value == expr1->unary.arg->leaf.value;
         return false;
       }
       return true;      
     }
 
     switch (expr1->type) {
-      case AE_TRUE:
-        return expr2->type == AE_FALSE;
-      case AE_FALSE:
-        return expr2->type == AE_FALSE;
-      case AE_AROMATIC:
-        return expr2->type == AE_ALIPHATIC;
-      case AE_ALIPHATIC:
-        return expr2->type == AE_AROMATIC;
-      case AE_CYCLIC:
-        return expr2->type == AE_ACYCLIC;
-      case AE_ACYCLIC:
-        return expr2->type == AE_CYCLIC;
+      case Smiley::AE_True:
+        return expr2->type == Smiley::AE_False;
+      case Smiley::AE_False:
+        return expr2->type == Smiley::AE_False;
+      case Smiley::AE_Aromatic:
+        return expr2->type == Smiley::AE_Aliphatic;
+      case Smiley::AE_Aliphatic:
+        return expr2->type == Smiley::AE_Aromatic;
+      case Smiley::AE_Cyclic:
+        return expr2->type == Smiley::AE_Acyclic;
+      case Smiley::AE_Acyclic:
+        return expr2->type == Smiley::AE_Cyclic;
       default:
         return false;
     }
@@ -795,16 +788,16 @@ namespace SC {
       << "' can't be true at the same time." << std::endl;
   }
 
-  bool IsConflicting(AtomExpr *root, AtomExpr *expr1, AtomExpr *expr2)
+  bool IsConflicting(SmartsAtomExpr *root, SmartsAtomExpr *expr1, SmartsAtomExpr *expr2)
   {
     // e.g. [Cc] [Ss]
-    if (AreTypes(expr1, expr2, AE_AROMELEM, AE_ALIPHELEM))
+    if (AreTypes(expr1, expr2, Smiley::AE_AromaticElement, Smiley::AE_AliphaticElement))
       return true;
     // e.g. [C&a]
-    if (AreTypes(expr1, expr2, AE_ALIPHELEM, AE_AROMATIC))
+    if (AreTypes(expr1, expr2, Smiley::AE_AliphaticElement, Smiley::AE_Aromatic))
       return true;
     // e.g. [cA]
-    if (AreTypes(expr1, expr2, AE_AROMELEM, AE_ALIPHATIC))
+    if (AreTypes(expr1, expr2, Smiley::AE_AromaticElement, Smiley::AE_Aliphatic))
       return true;
 
     // e.g. [!**] [Aa] [R0R] [C!C]
@@ -812,16 +805,16 @@ namespace SC {
       return true;
 
     // e.g. [R0a]
-    if (AreTypes(expr1, expr2, AE_ACYCLIC, AE_AROMATIC))
+    if (AreTypes(expr1, expr2, Smiley::AE_Acyclic, Smiley::AE_Aromatic))
       return true;
     // e.g. [R0r5]
-    if (AreTypes(expr1, expr2, AE_ACYCLIC, AE_SIZE))
+    if (AreTypes(expr1, expr2, Smiley::AE_Acyclic, Smiley::AE_RingSize))
       return true;
     // e.g. [R0R2]
-    if (AreTypes(expr1, expr2, AE_ACYCLIC, AE_RINGS))
+    if (AreTypes(expr1, expr2, Smiley::AE_Acyclic, Smiley::AE_RingMembership))
       return true;
     // e.g. [R0x3]
-    if (AreTypes(expr1, expr2, AE_ACYCLIC, AE_RINGCONNECT))
+    if (AreTypes(expr1, expr2, Smiley::AE_Acyclic, Smiley::AE_RingConnectivity))
       return true;
 
     if (!IsSameType(expr1, expr2))
@@ -834,22 +827,22 @@ namespace SC {
     return false;
   }
 
-  bool IsConflicting(BondExpr *root, BondExpr *expr1, BondExpr *expr2)
+  bool IsConflicting(SmartsBondExpr *root, SmartsBondExpr *expr1, SmartsBondExpr *expr2)
   {
     // e.g. -!- =!= @!@
-    if (expr2->type == BE_NOT && expr1->type == expr2->mon.arg->type)
+    if (expr2->type == Smiley::OP_Not && expr1->type == expr2->unary.arg->type)
       return true;
-    if (expr1->type == BE_NOT && expr2->type == expr1->mon.arg->type)
+    if (expr1->type == Smiley::OP_Not && expr2->type == expr1->unary.arg->type)
       return true;
     // e.g. -= -# -:
-    if (AreTypes(expr1, expr2, BE_SINGLE, BE_DOUBLE) || AreTypes(expr1, expr2, BE_SINGLE, BE_TRIPLE) ||
-        AreTypes(expr1, expr2, BE_SINGLE, BE_AROM)) 
+    if (AreTypes(expr1, expr2, Smiley::BE_Single, Smiley::BE_Double) || AreTypes(expr1, expr2, Smiley::BE_Single, Smiley::BE_Triple) ||
+        AreTypes(expr1, expr2, Smiley::BE_Single, Smiley::BE_Aromatic)) 
       return true;
     // e.g. =# =:
-    if (AreTypes(expr1, expr2, BE_DOUBLE, BE_TRIPLE) || AreTypes(expr1, expr2, BE_DOUBLE, BE_AROM))
+    if (AreTypes(expr1, expr2, Smiley::BE_Double, Smiley::BE_Triple) || AreTypes(expr1, expr2, Smiley::BE_Double, Smiley::BE_Aromatic))
       return true;
     // e.g. #:
-    if (AreTypes(expr1, expr2, BE_TRIPLE, BE_AROM))
+    if (AreTypes(expr1, expr2, Smiley::BE_Triple, Smiley::BE_Aromatic))
       return true;
 
     return false;
@@ -873,22 +866,22 @@ namespace SC {
           ErrorDetection(root, other[i]);
       }
 
-      ErrorDetection(root, expr->bin.lft);
-      ErrorDetection(root, expr->bin.rgt);
+      ErrorDetection(root, expr->binary.lft);
+      ErrorDetection(root, expr->binary.rgt);
     }
 
     if (IsUnary(expr))
-      ErrorDetection(root, expr->mon.arg);
+      ErrorDetection(root, expr->unary.arg);
   }
 
-  void SmartsOptimizer::Optimize(Pattern *pattern, int opts)
+  void SmartsOptimizer::Optimize(Smarts *pattern, int opts)
   {
     // Optimize atom expressions
-    for (int i = 0; i < pattern->acount; ++i)
-      pattern->atom[i].expr = OptimizeExpr(pattern->atom[i].expr, opts, m_scores);
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      pattern->atoms[i].expr = OptimizeExpr(pattern->atoms[i].expr, opts, m_scores);
     // Optimize bond expressions
-    for (int i = 0; i < pattern->bcount; ++i)
-      pattern->bond[i].expr = OptimizeExpr(pattern->bond[i].expr, opts, m_scores);
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      pattern->bonds[i].expr = OptimizeExpr(pattern->bonds[i].expr, opts, m_scores);
 
     if (opts & AtomFalseProp)
       AtomFalsePropagation(pattern);
@@ -897,29 +890,29 @@ namespace SC {
 
     // Keep track of original indices & neighbors
     /*
-       std::map<AtomSpec*, int> specToIndex;
-       std::vector<std::vector<AtomSpec*> > nbrs(pattern->acount);
-       for (int i = 0; i < pattern->acount; ++i) {
-       specToIndex[&pattern->atom[i]] = i;
-       for (int j = 0; j < pattern->atom[i].nbrs.size(); ++j)
-       nbrs[i].push_back(&pattern->atom[pattern->atom[i].nbrs[j]]);
-    // Sort AtomSpec's neighbors
-    std::sort(nbrs[i].begin(), nbrs[i].end(), OptimizeAtomSpecSort(m_scores));
+       std::map<SmartsAtom*, int> specToIndex;
+       std::vector<std::vector<SmartsAtom*> > nbrs(pattern->atoms.size());
+       for (int i = 0; i < pattern->atoms.size(); ++i) {
+       specToIndex[&pattern->atoms[i]] = i;
+       for (int j = 0; j < pattern->atoms[i].nbrs.size(); ++j)
+       nbrs[i].push_back(&pattern->atoms[pattern->atoms[i].nbrs[j]]);
+    // Sort SmartsAtom's neighbors
+    std::sort(nbrs[i].begin(), nbrs[i].end(), OptimizeSmartsAtomSort(m_scores));
     }
     */
 
-    // Sort the pattern's AtomSpecs
+    // Sort the pattern's SmartsAtoms
     if (opts & AtomOrder) {
-      std::vector<AtomSpec*> specs;
-      for (int i = 0; i < pattern->acount; ++i)
-        specs.push_back(&pattern->atom[i]);
+      std::vector<SmartsAtom*> specs;
+      for (int i = 0; i < pattern->atoms.size(); ++i)
+        specs.push_back(&pattern->atoms[i]);
       m_scores->Sort(specs);
     }
 
     // Update neighbor indices
     /*
-       for (int i = 0; i < pattern->acount; ++i) {
-       AtomSpec &spec = pattern->atom[i];
+       for (int i = 0; i < pattern->atoms.size(); ++i) {
+       SmartsAtom &spec = pattern->atoms[i];
        int index = specToIndex[&spec];
        spec.nbrs.clear();
        for (int j = 0; j < nbrs[index].size(); ++j)
@@ -928,11 +921,11 @@ namespace SC {
        */
 
     // atom expression error detection
-    for (int i = 0; i < pattern->acount; ++i)
-      ErrorDetection(pattern->atom[i].expr, pattern->atom[i].expr);
+    for (int i = 0; i < pattern->atoms.size(); ++i)
+      ErrorDetection(pattern->atoms[i].expr, pattern->atoms[i].expr);
     // bond expression error detection
-    for (int i = 0; i < pattern->bcount; ++i)
-      ErrorDetection(pattern->bond[i].expr, pattern->bond[i].expr);
+    for (int i = 0; i < pattern->bonds.size(); ++i)
+      ErrorDetection(pattern->bonds[i].expr, pattern->bonds[i].expr);
   }
 
 }
