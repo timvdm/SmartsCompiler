@@ -3,11 +3,18 @@
 #include "defines.h"
 #include "util.h"
 
+#include "openbabel.h"
+#include "molecule.h"
+
+#include <openbabel/mol.h>
 #include <openbabel/stereo/stereo.h>
 #include <openbabel/stereo/tetrahedral.h>
 
 namespace SC {
 
+  /**
+   * Clear mapping implementations.
+   */
   template<typename MappingType>
   inline void ClearMapping(MappingType &mapping)
   {
@@ -34,6 +41,9 @@ namespace SC {
     mapping.maps.clear();
   }
 
+  /**
+   * Add mapping implementations.
+   */
   inline void AddMapping(SingleVectorMapping &mapping, std::vector<int> &map)
   {
     mapping.swap(map);
@@ -59,6 +69,9 @@ namespace SC {
     mapping.maps.push_back(map);
   }
 
+  /**
+   * Empty mapping implementations.
+   */
   template<typename MappingType>
   inline bool EmptyMapping(MappingType &mapping)
   {
@@ -67,7 +80,7 @@ namespace SC {
   template<>
   inline bool EmptyMapping<NoMapping>(NoMapping &mapping) 
   {
-    return mapping.match;
+    return !mapping.match;
   }
   template<>
   inline bool EmptyMapping<SingleMapping>(SingleMapping &mapping) 
@@ -85,245 +98,187 @@ namespace SC {
     return mapping.maps.empty();
   }
 
-  using namespace OpenBabel;
-  
-  const int SmartsImplicitRef = -9999; // Used as a placeholder when recording atom nbrs for chiral atoms
-
-  //! \class SSMatch parsmart.h <openbabel/parsmart.h>
-  //! \brief Internal class: performs fast, exhaustive matching used to find
-  //! just a single match in match() using recursion and explicit stack handling.
-  template<typename PatternType, typename MappingType, typename MolAtomIterType,
-           typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  class SSMatch
+  /**
+   * DoSingleMapping
+   */
+  template<typename MappingType>
+  struct DoSingleMapping
   {
-    public:
-      SSMatch(OBMol &mol, PatternType *pattern)
-      {
-        m_mol = &mol;
-        m_pat = pattern;
-        m_map.resize(pattern->numAtoms);
-
-        if (!mol.Empty()) {
-          m_uatoms = new bool [mol.NumAtoms() + 1];
-          memset((char*)m_uatoms, '\0', sizeof(bool) * (mol.NumAtoms() + 1));
-        } else
-          m_uatoms = (bool*)NULL;
-      }
-
-      ~SSMatch()
-      {
-        if (m_uatoms)
-          delete [] m_uatoms;
-      }
-
-      void Match(MappingType &mapping, int bidx = -1);
-    private:
-      bool *m_uatoms;
-      OBMol *m_mol;
-      PatternType *m_pat;
-      std::vector<int>  m_map;
+    enum { result = MappingType::single };
+  };
+  template<>
+  struct DoSingleMapping<SingleVectorMapping>
+  {
+    enum { result = true };
+  };
+  template<>
+  struct DoSingleMapping<VectorMappingList>
+  {
+    enum { result = false };
   };
 
-  template<typename PatternType, typename MappingType, typename MolAtomIterType,
-           typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  void SSMatch<PatternType, MappingType, MolAtomIterType, MolBondIterType,
-               AtomAtomIterType, AtomBondIterType>::Match(MappingType &mapping, int bidx)
+
+  template<typename MoleculeType, typename SmartsType, typename MappingType>
+  class SmartsMatcherImpl
   {
-    SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType> matcher;
-    if (bidx == -1) {
-      OBAtom *atom;
-      std::vector<OBAtom*>::iterator i;
-      for (atom = m_mol->BeginAtom(i); atom; atom = m_mol->NextAtom(i))
-        if (m_pat->CallEvalAtomExpr(0, atom)) {
-          m_map[0] = atom->GetIdx();
-          m_uatoms[atom->GetIdx()] = true;
-          Match(mapping, 0);
-          m_map[0] = 0;
-          m_uatoms[atom->GetIdx()] = false;
-        }
-      return;
-    }
+    public:
+      typedef typename smarts_traits<SmartsType>::atom_type SmartsAtomType;
+      typedef typename smarts_traits<SmartsType>::bond_type SmartsBondType;
 
-    //if (bidx == m_pat->bcount) { //save full match here
-    if (bidx == m_pat->bonds.size()) { //save full match here
-      AddMapping(mapping, m_map);
-      return;
-    }
+      typedef typename molecule_traits<MoleculeType>::atom_arg_type AtomArgType;
+      typedef typename molecule_traits<MoleculeType>::mol_atom_iterator_type MolAtomIter;
+      typedef typename molecule_traits<MoleculeType>::atom_bond_iterator_type AtomBondIter;
+      
+      typedef typename molecule_traits<MoleculeType>::atom_wrapper_type AtomWrapperType;
+      typedef typename molecule_traits<MoleculeType>::bond_wrapper_type BondWrapperType;
 
-    if (m_pat->bonds[bidx].grow) { //match the next bond
-      int src = m_pat->bonds[bidx].src;
-      int dst = m_pat->bonds[bidx].dst;
+      SmartsMatcherImpl(MoleculeType *mol, SmartsType *smarts)
+      {
+        m_mol = mol;
+        m_smarts = smarts;
+        m_map.resize(smarts->numAtoms(), -1);
+        m_bonds.resize(smarts->numBonds(), false);
+      }
 
-      if (m_map[src] <= 0 || m_map[src] > (signed)m_mol->NumAtoms())
-        return;
+      void match(MappingType &mapping, SmartsAtomType smartsAtom, AtomArgType atom, int prevAtom = -1)
+      {
+        // if the atom properties don't match, there is nothing to do
+        if (!m_smarts->matchAtom(smartsAtom, AtomWrapperType(atom)))
+          return;
 
-      OBAtom *atom, *nbr;
-      std::vector<OBBond*>::iterator i;
+        m_map[smartsAtom.index] = GetAtomIndex(m_mol, atom);
+        //std::cout << smartsAtom.index << " -> " << GetAtomIndex(m_mol, atom) << std::endl;
 
-      atom = m_mol->GetAtom(m_map[src]);
-      for (nbr = atom->BeginNbrAtom(i); nbr; nbr = atom->NextNbrAtom(i))
-        if (!m_uatoms[nbr->GetIdx()] && m_pat->CallEvalAtomExpr(dst, nbr) &&
-            m_pat->CallEvalBondExpr(bidx, ((OBBond*) *i))) {
-          m_map[dst] = nbr->GetIdx();
-          m_uatoms[nbr->GetIdx()] = true;
-          Match(mapping, bidx + 1);
-          m_uatoms[nbr->GetIdx()] = false;
-          m_map[dst] = 0;
-        }
-    } else { //just check bond here
-      OBBond *bond = m_mol->GetBond(m_map[m_pat->bonds[bidx].src], m_map[m_pat->bonds[bidx].dst]);
-      if (bond && m_pat->CallEvalBondExpr(bidx, bond))
-        Match(mapping, bidx + 1);
-    }
-  }
+        // check for mapping
+        if (std::find(m_map.begin(), m_map.end(), -1) == m_map.end()) {
+          // ring closures
+          bool ringClosuresMatch = true;
+          for (std::size_t i = 0; i < m_bonds.size(); ++i) {
+            SmartsBondType smartsBond = m_smarts->bond(i);
+            if (!m_bonds[smartsBond.index]) {
+              ringClosuresMatch = false;
 
-  /*
-  void SmartsMatcher::SetupAtomMatchTable(std::vector<std::vector<bool> > &ttab,
-  const SmartsPattern *pat, OBMol &mol)
-  {
-  int i;
+              MolAtomIter source = GetBeginAtoms<MoleculeType*, MolAtomIter>(m_mol);
+              std::advance(source, m_map[smartsBond.source]);
+              MolAtomIter target = GetBeginAtoms<MoleculeType*, MolAtomIter>(m_mol);
+              std::advance(target, m_map[smartsBond.target]);
 
-  ttab.resize(pat->acount);
-  for (i = 0;i < pat->acount;++i)
-  ttab[i].resize(mol.NumAtoms()+1);
+              //std::cout << "Ring Closure: " << (*source)->GetIndex() << "-" << (*target)->GetIndex() << std::endl;
 
-  OBAtom *atom;
-  std::vector<OBAtom*>::iterator j;
-  for (i = 0;i < pat->acount;++i)
-  for (atom = mol.BeginAtom(j);atom;atom = mol.NextAtom(j))
-  if (EvalAtomExpr(pat->atom[0].expr,atom))
-  ttab[i][atom->GetIdx()] = true;
-  }
-  */
+              AtomBondIter bond = GetBeginBonds<MoleculeType*, AtomArgType, AtomBondIter>(m_mol, *source);
+              AtomBondIter bonds_end = GetEndBonds<MoleculeType*, AtomArgType, AtomBondIter>(m_mol, *source);
+              for (; bond != bonds_end; ++bond)
+                if (GetAtomIndex(m_mol, GetOtherAtom(m_mol, *bond, *source)) == GetAtomIndex(m_mol, *target)) {
+                  //std::cout << "..." << std::endl;
+                  if (m_smarts->matchBond(smartsBond, BondWrapperType(*bond))) {
+                    ringClosuresMatch = true;
+                    break;
+                  }
+                }
 
-  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  template<typename MoleculeType, typename PatternType, typename MappingType>
-  void SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::FastSingleMatch(MoleculeType &mol, PatternType *pat, MappingType &mapping)
-  {
-
-
-
-
-
-
-
-
-
-
-
-
-    OBAtom *atom,*a1,*nbr;
-    std::vector<OBAtom*>::iterator i;
-
-    OBBitVec bv(mol.NumAtoms()+1);
-    std::vector<int> map;
-    //map.resize(pat->acount);
-    map.resize(pat->numAtoms);
-    std::vector<std::vector<OBBond*>::iterator> vi;
-    std::vector<bool> vif;
-
-    //if (pat->bcount) {
-    if (pat->bonds.size()) {
-      //vif.resize(pat->bcount);
-      vif.resize(pat->bonds.size());
-      //vi.resize(pat->bcount);
-      vi.resize(pat->bonds.size());
-    }
-
-    int bcount;
-    for (atom = mol.BeginAtom(i); atom; atom=mol.NextAtom(i)) {
-      if (!pat->CallEvalAtomExpr(0, atom))
-        continue;
-
-      map[0] = atom->GetIdx();
-      if (pat->bonds.size())
-        vif[0] = false;
-      bv.Clear();
-      bv.SetBitOn(atom->GetIdx());
-
-      for (bcount = 0; bcount >= 0;) {
-        //***entire pattern matched***
-        if (bcount == pat->bonds.size()) { //save full match here
-          AddMapping(mapping, map);
-          bcount--;
-          return; //found a single match
-        }
-
-        //***match the next bond***
-        if (!pat->bonds[bcount].grow) { //just check bond here
-          if (!vif[bcount]) {
-            OBBond *bond = mol.GetBond(map[pat->bonds[bcount].src], map[pat->bonds[bcount].dst]);
-            if (bond && pat->CallEvalBondExpr(bcount, bond)) {
-              vif[bcount++] = true;
-              if (bcount < pat->bonds.size())
-                vif[bcount] = false;
-            } else
-              bcount--;
-          } else //bond must have already been visited - backtrack
-            bcount--;
-        } else { //need to map atom and check bond
-          a1 = mol.GetAtom(map[pat->bonds[bcount].src]);
-
-          if (!vif[bcount]) //figure out which nbr atom we are mapping
-            nbr = a1->BeginNbrAtom(vi[bcount]);
-          else {
-            bv.SetBitOff(map[pat->bonds[bcount].dst]);
-            nbr = a1->NextNbrAtom(vi[bcount]);
+              if (!ringClosuresMatch)
+                break;
+            }
           }
 
-          for (; nbr; nbr = a1->NextNbrAtom(vi[bcount]))
-            if (!bv[nbr->GetIdx()])
-              if (pat->CallEvalAtomExpr(pat->bonds[bcount].dst, nbr)
-                  && pat->CallEvalBondExpr(bcount, (OBBond *)*(vi[bcount]))) {
-                bv.SetBitOn(nbr->GetIdx());
-                map[pat->bonds[bcount].dst] = nbr->GetIdx();
-                vif[bcount] = true;
-                bcount++;
-                if (bcount < pat->bonds.size())
-                  vif[bcount] = false;
-                break;
-              }
+          if (ringClosuresMatch) {
+            //std::cout << "found mapping..." << std::endl;
+            AddMapping(mapping, m_map);
+          }
 
-          if (!nbr)//no match - time to backtrack
-            bcount--;
+          m_map[smartsAtom.index] = -1;
+          return;
         }
-      } // for bcount
-    } // for atom
-  }
+
+        for (int i = 0; i < smartsAtom.degree(); ++i) {
+          SmartsBondType smartsBond = smartsAtom.bond(i);
+
+          if (m_bonds[smartsBond.index])
+            continue;
+          
+
+          SmartsAtomType nbrSmartsAtom = m_smarts->atom(smartsBond.other(smartsAtom.index));
+
+          if (m_map[nbrSmartsAtom.index] != -1)
+            continue;
+
+          AtomBondIter bond = GetBeginBonds<MoleculeType*, AtomArgType, AtomBondIter>(m_mol, atom);
+          AtomBondIter bonds_end = GetEndBonds<MoleculeType*, AtomArgType, AtomBondIter>(m_mol, atom);
+          for (; bond != bonds_end; ++bond) {
+            if (!m_smarts->matchBond(smartsBond, BondWrapperType(*bond)))
+              continue;
+
+            AtomArgType nbrAtom = GetOtherAtom(m_mol, *bond, atom);
+            if (GetAtomIndex(m_mol, nbrAtom) == prevAtom)
+              continue;
+
+            m_bonds[smartsBond.index] = true;
+            match(mapping, nbrSmartsAtom, nbrAtom, GetAtomIndex(m_mol, atom));
+
+            if (DoSingleMapping<MappingType>::result && !EmptyMapping(mapping))
+              return;
 
 
-  template<typename MolAtomIterType, typename MolBondIterType, typename AtomAtomIterType, typename AtomBondIterType>
-  template<typename MoleculeType, typename PatternType, typename MappingType>
-  bool SmartsMatcher<MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType>::Match(MoleculeType &mol, PatternType *pat, MappingType &mapping)
+            m_bonds[smartsBond.index] = false;
+          }
+          
+        }
+
+        m_map[smartsAtom.index] = -1;
+      }
+
+      void match(MappingType &mapping)
+      {
+        if (m_smarts->atoms.empty())
+          return;
+
+        // try to match each atom in the molecule against the first atom
+        // epxression in the SMARTS 
+        MolAtomIter atom = GetBeginAtoms<MoleculeType*, MolAtomIter>(m_mol);
+        MolAtomIter atoms_end = GetEndAtoms<MoleculeType*, MolAtomIter>(m_mol);
+        for (; atom != atoms_end; ++atom) {
+          match(mapping, m_smarts->atom(0), *atom);
+
+          if (DoSingleMapping<MappingType>::result && !EmptyMapping(mapping))
+            return;
+        }
+      }
+
+    private:
+      MoleculeType *m_mol;
+      SmartsType *m_smarts;
+      std::vector<int>  m_map;
+      std::vector<bool> m_bonds;
+  };
+
+  template<typename MoleculeType, typename SmartsType, typename MappingType>
+  bool match(MoleculeType *mol, SmartsType *smarts, MappingType &mapping)
   {
     ClearMapping(mapping);
-    if (!pat || pat->numAtoms == 0)
-      return(false);//shouldn't ever happen
 
-    if (DoSingleMapping<MappingType>::result && !pat->ischiral) {
-      // perform a fast single match (only works for non-chiral SMARTS)
-      FastSingleMatch(mol, pat, mapping);
-    } else {
-      // perform normal match (chirality ignored and checked below)
-      SSMatch<PatternType, MappingType, MolAtomIterType, MolBondIterType, AtomAtomIterType, AtomBondIterType> ssm(mol, pat);
-      ssm.Match(mapping);
-    }
+    if (!smarts || smarts->numAtoms() == 0)
+      return false;
+
+    SmartsMatcherImpl<MoleculeType, SmartsType, MappingType> ssm(mol, smarts);
+    ssm.match(mapping);
 
     return !EmptyMapping(mapping);
   }
 
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleVectorMapping>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleVectorMapping &mapping);
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, VectorMappingList>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, VectorMappingList &mapping);
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, NoMapping>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, NoMapping &mapping);
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, SingleMapping>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, SingleMapping &mapping);
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, CountMapping>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, CountMapping &mapping);
-  template bool SmartsMatcher<>::Match<OpenBabel::OBMol, SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>, MappingList>(OpenBabel::OBMol &mol,
-      SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> *pat, MappingList &mapping);
+  template bool match<Molecule, Smarts, SingleVectorMapping>(Molecule *mol, Smarts *smarts, SingleVectorMapping &mapping);
+  template bool match<Molecule, Smarts, VectorMappingList>(Molecule *mol, Smarts *smarts, VectorMappingList &mapping);
+  template bool match<Molecule, Smarts, NoMapping>(Molecule *mol, Smarts *smarts, NoMapping &mapping);
+  template bool match<Molecule, Smarts, SingleMapping>(Molecule *mol, Smarts *smarts, SingleMapping &mapping);
+  template bool match<Molecule, Smarts, CountMapping>(Molecule *mol, Smarts *smarts, CountMapping &mapping);
+  template bool match<Molecule, Smarts, MappingList>(Molecule *mol, Smarts *smarts, MappingList &mapping);
 
+
+  // OpenBabel
+  template bool match<OpenBabel::OBMol, Smarts, SingleVectorMapping>(OpenBabel::OBMol *mol, Smarts *smarts, SingleVectorMapping &mapping);
+  template bool match<OpenBabel::OBMol, Smarts, VectorMappingList>(OpenBabel::OBMol *mol, Smarts *smarts, VectorMappingList &mapping);
+  template bool match<OpenBabel::OBMol, Smarts, NoMapping>(OpenBabel::OBMol *mol, Smarts *smarts, NoMapping &mapping);
+  template bool match<OpenBabel::OBMol, Smarts, SingleMapping>(OpenBabel::OBMol *mol, Smarts *smarts, SingleMapping &mapping);
+  template bool match<OpenBabel::OBMol, Smarts, CountMapping>(OpenBabel::OBMol *mol, Smarts *smarts, CountMapping &mapping);
+  template bool match<OpenBabel::OBMol, Smarts, MappingList>(OpenBabel::OBMol *mol, Smarts *smarts, MappingList &mapping);
 
 }

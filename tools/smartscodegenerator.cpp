@@ -61,7 +61,6 @@ int main(int argc, char**argv)
   std::ifstream ifs(smarts_file.c_str());
   std::string line;
   while (std::getline(ifs, line)) {
-    OpenBabelSmartsMatcher matcher;
     strip(line);
     if (line.size() && line[0] == '#')
       continue;
@@ -85,16 +84,15 @@ int main(int argc, char**argv)
     if (function.size() && function[0] == '#')
       function = "";
 
-    if (!matcher.Init(line))
-      continue;
-    OpenBabel::Pattern *pattern = matcher.GetPattern();
-    if (atom && pattern->acount > 1) {
+    Smarts *smarts = parse(line);
+
+    if (atom && smarts->numAtoms() > 1) {
       std::cerr << "Warning: The 'atom' option is set for SMARTS " << line << " which is not a single atom SMARTS, ignoring option." << std::endl;
       atom = false;
     }
-    optimizer.Optimize(pattern, opt);
-    PrintPattern(pattern, scores);
-    compiler.GeneratePatternCode(line, pattern, function, nomap, count, atom);
+    optimizer.Optimize(smarts, opt);
+    PrintSmarts(smarts, scores);
+    compiler.GeneratePatternCode(line, smarts, function, nomap, count, atom);
   }
   
   compiler.StopSmartsModule(ofs);

@@ -5,6 +5,7 @@ set(tests
   scores
   assembler
   smarts
+  match
   )
 
 set(TEST_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})

@@ -1,84 +1,74 @@
 #ifndef SC_SMARTSMATCHER_H
 #define SC_SMARTSMATCHER_H
 
-#include <openbabel/mol.h>
-#include <openbabel/parsmart.h>
+#include <vector>
 
 namespace SC {
-
-  struct PythonSmartsPattern;
 
   typedef std::vector<int> SingleVectorMapping;
   typedef std::vector<std::vector<int> > VectorMappingList;
 
+  /**
+   * NoMapping
+   */
   struct NoMapping
   {
     enum { single = true };
+
+    NoMapping() : match(false)
+    {
+    }
+
     bool match;
   };
 
+  /**
+   * CountMapping
+   */
   struct CountMapping
   {
     enum { single = false };
+
+    CountMapping() : count(0)
+    {
+    }
+
     int count;
   };
 
+  /**
+   * SingleMapping
+   */
   struct SingleMapping
   {
     enum { single = true };
     std::vector<int> map;
   };
 
+  /**
+   * MappingList
+   */
   struct MappingList
   {
     enum { single = false };
     std::vector<std::vector<int> > maps;
   };
 
-  template<typename MappingType>
-  struct DoSingleMapping
-  {
-    enum { result = MappingType::single };
-  };
-  template<>
-  struct DoSingleMapping<SingleVectorMapping>
-  {
-    enum { result = true };
-  };
-  template<>
-  struct DoSingleMapping<VectorMappingList>
-  {
-    enum { result = false };
-  };
+  /**
+   * Match a SMARTS against a molecule.
+   */
+  template<typename MoleculeType, typename SmartsType, typename MappingType>
+  bool match(MoleculeType *mol, SmartsType *smarts, MappingType &mapping);
 
-  template<typename MolAtomIterType = OpenBabel::OBAtomIterator, typename MolBondIterType = OpenBabel::OBBondIterator,
-           typename AtomAtomIterType = OpenBabel::OBAtomAtomIter, typename AtomBondIterType = OpenBabel::OBBondIterator>
-  class SmartsMatcher
+  /**
+   * @overload
+   */
+  template<typename MoleculeType, typename SmartsType>
+  bool match(MoleculeType *mol, SmartsType *smarts)
   {
-    protected:
-      template<typename MoleculeType, typename SmartsPatternType, typename MappingType>
-      void FastSingleMatch(MoleculeType &mol, SmartsPatternType *pattern, MappingType &mapping);
-
-    public:
-      SmartsMatcher() {}
-      virtual ~SmartsMatcher() {}
-
-      template<typename MoleculeType, typename SmartsPatternType, typename MappingType>
-      bool Match(MoleculeType &mol, SmartsPatternType *pat, MappingType &mapping);
-  };
-
-  class OpenBabelSmartsMatcher : public OpenBabel::OBSmartsPattern
-  {
-    public:
-      OpenBabelSmartsMatcher() : OpenBabel::OBSmartsPattern()
-      {
-      }
-
-      OpenBabel::Pattern* GetPattern()
-      {
-        return _pat;
-      }
-  };
+    NoMapping mapping;
+    return match(mol, smarts, mapping);
+  }
 
 }
 

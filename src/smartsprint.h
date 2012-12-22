@@ -8,9 +8,9 @@ namespace SC {
   // forward declaration
   class SmartsScores;
 
-  void PrintPattern(Smarts *pattern, SmartsScores *scores);
-  void PrintEnvironmentScores(Smarts *pattern, SmartsScores *scores);
-  void PrintPatternTree(Smarts *pattern, SmartsScores *scores);
+  void PrintSmarts(Smarts *smarts, SmartsScores *scores);
+  void PrintEnvironmentScores(Smarts *smarts, SmartsScores *scores);
+  void PrintSmartsTree(Smarts *smarts, SmartsScores *scores);
 
   std::string GetExprString(const SmartsAtomExpr *expr, bool implicitAnd = true);
   std::string GetExprString(const SmartsBondExpr *expr, bool implicitAnd = true);

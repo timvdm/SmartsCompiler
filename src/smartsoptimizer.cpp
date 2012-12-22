@@ -473,8 +473,8 @@ namespace SC {
   void OptimizeBinaryExpr2(Expr *expr, SmartsScores *scores)
   {
     if (IsBinary(expr)) {
-      double lftScore = scores->GetExprScore(expr->binary.lft);
-      double rgtScore = scores->GetExprScore(expr->binary.rgt);
+      //double lftScore = scores->GetExprScore(expr->binary.lft);
+      //double rgtScore = scores->GetExprScore(expr->binary.rgt);
 
       std::vector<Expr*> children(2);
       children[0] = expr->binary.lft;

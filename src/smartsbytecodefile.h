@@ -48,7 +48,6 @@ namespace SC {
       void write(std::ostream &os, const std::vector<Instruction> &instructions, const std::vector<Symbol> &symbols)
       {
         // write the number of instructions
-        unsigned int numInstructions;
         write32(os, instructions.size());
         // write code
         for (std::size_t i = 0; i < instructions.size(); ++i) {

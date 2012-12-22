@@ -61,29 +61,48 @@ namespace SC {
   template<typename MolType>
   struct molecule_traits
   {
+    typedef typename MolType::atom_arg_type atom_arg_type;
+    typedef typename MolType::bond_arg_type bond_arg_type;
+
     typedef typename MolType::mol_atom_iterator_type mol_atom_iterator_type;
     typedef typename MolType::mol_bond_iterator_type mol_bond_iterator_type;
     typedef typename MolType::atom_atom_iterator_type atom_atom_iterator_type;
     typedef typename MolType::atom_bond_iterator_type atom_bond_iterator_type;
   };
 
+  /**
+   * Iterator over atoms in a molecule.
+   */
   template<typename MolType, typename MolAtomIterType>
-  MolAtomIterType GetBeginAtoms(MolType &mol);
+  MolAtomIterType GetBeginAtoms(MolType mol);
   template<typename MolType, typename MolAtomIterType>
-  MolAtomIterType GetEndAtoms(MolType &mol);
+  inline MolAtomIterType GetEndAtoms(MolType mol);
+
+  /*
   template<typename MolType, typename MolBondIterType>
-  MolBondIterType GetBeginBonds(MolType &mol);
+  MolBondIterType GetBeginBonds(MolType mol);
   template<typename MolType, typename MolBondIterType>
   MolBondIterType GetEndBonds(MolType &mol);
   template<typename AtomType, typename AtomAtomIterType>
   AtomAtomIterType GetBeginAtoms(AtomType &mol);
   template<typename AtomType, typename AtomAtomIterType>
   AtomAtomIterType GetEndAtoms(AtomType &mol);
-  template<typename AtomType, typename AtomBondIterType>
-  AtomBondIterType GetBeginBonds(AtomType &mol);
-  template<typename AtomType, typename AtomBondIterType>
-  AtomBondIterType GetEndBonds(AtomType &mol);
+  */
 
+  /**
+   * Iterate over bonds around an atom.
+   */
+  template<typename MolType, typename AtomType, typename AtomBondIterType>
+  inline AtomBondIterType GetBeginBonds(MolType mol, AtomType atom);
+  template<typename MolType, typename AtomType, typename AtomBondIterType>
+  inline AtomBondIterType GetEndBonds(MolType mol, AtomType atom);
+
+  template<typename MolType, typename AtomType>
+  inline std::size_t GetAtomIndex(MolType mol, AtomType atom);
+
+  template<typename MolType, typename BondType, typename AtomType>
+  inline AtomType GetOtherAtom(MolType mol, BondType bond, AtomType atom);
+  
 }
 
 #endif

@@ -97,24 +97,16 @@ namespace SC {
   };
 
   template<>
-  struct molecule_traits<OpenBabel::OBMol>
+  inline OpenBabel::OBAtomIterator GetBeginAtoms<OpenBabel::OBMol*, OpenBabel::OBAtomIterator>(OpenBabel::OBMol *mol)
   {
-    typedef OpenBabel::OBAtomIterator mol_atom_iterator_type;
-    typedef OpenBabel::OBBondIterator mol_bond_iterator_type;
-    typedef OBIter<OpenBabel::OBAtomAtomIter> atom_atom_iterator_type;
-    typedef OpenBabel::OBBondIterator atom_bond_iterator_type;
-  };
-
-  template<>
-  inline OpenBabel::OBAtomIterator GetBeginAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol) 
-  {
-    return mol.BeginAtoms();
+    return mol->BeginAtoms();
   }
   template<>
-  inline OpenBabel::OBAtomIterator GetEndAtoms<OpenBabel::OBMol, OpenBabel::OBAtomIterator>(OpenBabel::OBMol &mol)
+  inline OpenBabel::OBAtomIterator GetEndAtoms<OpenBabel::OBMol*, OpenBabel::OBAtomIterator>(OpenBabel::OBMol *mol)
   {
-    return mol.EndAtoms();
+    return mol->EndAtoms();
   }
+  /*
   template<>
   inline OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBMol, OpenBabel::OBBondIterator>(OpenBabel::OBMol &mol) 
   {
@@ -135,17 +127,30 @@ namespace SC {
   {
     return OBIter<OpenBabel::OBAtomAtomIter>(atom);
   }
+  */
   template<>
-  inline OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom) 
+  inline OpenBabel::OBBondIterator GetBeginBonds<OpenBabel::OBMol*, OpenBabel::OBAtom*, OpenBabel::OBBondIterator>(OpenBabel::OBMol*, OpenBabel::OBAtom *atom) 
   {
-    return atom.BeginBonds();
+    return atom->BeginBonds();
   }
   template<>
-  inline OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBAtom, OpenBabel::OBBondIterator>(OpenBabel::OBAtom &atom)
+  inline OpenBabel::OBBondIterator GetEndBonds<OpenBabel::OBMol*, OpenBabel::OBAtom*, OpenBabel::OBBondIterator>(OpenBabel::OBMol*, OpenBabel::OBAtom *atom)
   {
-    return atom.EndBonds();
+    return atom->EndBonds();
   }
 
+  template<>
+  inline std::size_t GetAtomIndex<OpenBabel::OBMol*, OpenBabel::OBAtom*>(OpenBabel::OBMol*, OpenBabel::OBAtom *atom)
+  {
+    return atom->GetIndex();
+  }
+
+  template<>
+  inline OpenBabel::OBAtom* GetOtherAtom<OpenBabel::OBMol*, OpenBabel::OBBond*, OpenBabel::OBAtom*>(OpenBabel::OBMol *mol, OpenBabel::OBBond *bond, OpenBabel::OBAtom *atom)
+  {
+    return bond->GetNbrAtom(atom);
+  }
+  
   /**
    * CallEvalExpr
    */
@@ -270,6 +275,11 @@ namespace SC {
         return m_bond->IsAromatic();
       }
 
+      bool isCyclic() const
+      {
+        return m_bond->IsInRing();
+      }
+
       int order() const
       {
         return m_bond->GetBO();
@@ -277,6 +287,21 @@ namespace SC {
 
     private:
       OpenBabel::OBBond *m_bond;
+  };
+
+  template<>
+  struct molecule_traits<OpenBabel::OBMol>
+  {
+    typedef OpenBabel::OBAtom* atom_arg_type;
+    typedef OpenBabel::OBBond* bond_arg_type;
+
+    typedef OpenBabel::OBAtomIterator mol_atom_iterator_type;
+    typedef OpenBabel::OBBondIterator mol_bond_iterator_type;
+    typedef OBIter<OpenBabel::OBAtomAtomIter> atom_atom_iterator_type;
+    typedef OpenBabel::OBBondIterator atom_bond_iterator_type;
+
+    typedef OpenBabelAtom atom_wrapper_type;
+    typedef OpenBabelBond bond_wrapper_type;
   };
 
   typedef SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond> OpenBabelSmartsPattern;

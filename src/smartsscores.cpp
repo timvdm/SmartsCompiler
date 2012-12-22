@@ -127,8 +127,6 @@ namespace SC {
 
     double score = GetExprScore(bond->expr) * GetExprScore(nbr) / depth;
 
-    int bondIndex = bond - &pattern->bonds[0];
-    //for (int i = bondIndex + 1; i < pattern->bcount; ++i)
     for (int i = 0; i < pattern->bonds.size(); ++i)
       if (pattern->bonds[i].source == bond->target) {
         score += EnvironmentScoreDFS(pattern, &pattern->bonds[i], radius, depth);

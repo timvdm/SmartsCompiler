@@ -3,7 +3,7 @@
 
 namespace SC {
 
-  class Smarts;
+  struct Smarts;
   class SmartsScores;
 
   /**

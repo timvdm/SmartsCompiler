@@ -27,6 +27,8 @@ bool TestAtomScoreSort(const std::string &expr, const std::string &correct, Smar
 
   COMPARE(result, correct);
 
+  delete pattern;
+
   return result == correct;
 }
 

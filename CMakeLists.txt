@@ -4,6 +4,9 @@ project(SmartsCompiler)
 # set the module path
 set(CMAKE_MODULE_PATH ${SmartsCompiler_SOURCE_DIR}/cmake/modules)
 
+# compiler options
+set(CMAKE_CXX_FLAGS "-pedantic -Wall -O3 ${CMAKE_CXX_FLAGS}")
+
 # find and setup OpenBabel
 find_package(OpenBabel2 REQUIRED)
 include_directories(${OPENBABEL2_INCLUDE_DIR})
@@ -53,12 +56,13 @@ set(libsmartscompiler_hdrs
 
 set(libsmartscompiler_srcs
     src/openbabel.cpp
-    #src/smartsmatcher.cpp
+    src/smartsmatcher.cpp
     src/smartsscores.cpp
     src/smartsoptimizer.cpp
     src/smartscodegenerator.cpp
     src/smartsprint.cpp
     src/smarts.cpp
+    src/molecule.cpp
 )
 
 add_library(smartscompiler SHARED ${libsmartscompiler_srcs})
@@ -68,7 +72,7 @@ install(TARGETS smartscompiler
                 LIBRARY DESTINATION lib
                 ARCHIVE DESTINATION lib)
 
-              #add_subdirectory(tools)
+add_subdirectory(tools)
 
 
 

@@ -19,15 +19,17 @@ class ParseArgs
   };
 
   public:
-    static std::vector<std::string> Args(const std::string &str1, const std::string &str2 = std::string(),
-       const std::string &str3 = std::string(), const std::string &str4 = std::string(),
-       const std::string &str5 = std::string(), const std::string &str6 = std::string(),
-       const std::string &str7 = std::string(), const std::string &str8 = std::string(),
-       const std::string &str9 = std::string(), const std::string &str10 = std::string(),
-       const std::string &str11 = std::string(), const std::string &str12 = std::string(),
-       const std::string &str13 = std::string(), const std::string &str14 = std::string())
+    static std::vector<std::string> Args(
+        const std::string &str1 = std::string(), const std::string &str2 = std::string(),
+        const std::string &str3 = std::string(), const std::string &str4 = std::string(),
+        const std::string &str5 = std::string(), const std::string &str6 = std::string(),
+        const std::string &str7 = std::string(), const std::string &str8 = std::string(),
+        const std::string &str9 = std::string(), const std::string &str10 = std::string(),
+        const std::string &str11 = std::string(), const std::string &str12 = std::string(),
+        const std::string &str13 = std::string(), const std::string &str14 = std::string())
     {
-      std::vector<std::string> result(1, str1);
+      std::vector<std::string> result;
+      if (!str1.empty()) result.push_back(str1);
       if (!str2.empty()) result.push_back(str2);
       if (!str3.empty()) result.push_back(str3);
       if (!str4.empty()) result.push_back(str4);

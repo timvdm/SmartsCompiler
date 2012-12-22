@@ -425,5 +425,5 @@ namespace SC {
   }
 
   template struct SmartsPattern<OpenBabel::OBAtom, OpenBabel::OBBond>;
-
+ 
 }

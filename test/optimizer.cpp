@@ -24,6 +24,8 @@ bool TestAtomExprOptimization(const std::string &expr, const std::string &correc
   std::string result = GetExprString(pattern->atoms[0].expr);
   COMPARE(result, correct);
 
+  delete pattern;
+
   return result == correct;
 }
 

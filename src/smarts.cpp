@@ -94,9 +94,20 @@ namespace SC {
       std::cout << "addBond(" << source << ", " << target << ", " << order << ")" << std::endl;
 
       smarts->bonds.resize(smarts->bonds.size() + 1);
+      smarts->bonds.back().index = smarts->bonds.size() - 1;
       smarts->bonds.back().source = source;
       smarts->bonds.back().target = target;
-      smarts->bonds.back().expr = new SmartsBondExpr(type);
+      if (bondExpr.empty())
+        smarts->bonds.back().expr = new SmartsBondExpr(type);
+      else {
+        // convert infix to postfix
+        std::vector<SmartsBondExpr*> operations, postfix;
+        infixToPostfix(bondExpr, operations, postfix);
+        // postfix to tree
+        smarts->bonds.back().expr = postfixToTree(postfix);
+        // clear bond expressions
+        bondExpr.clear();
+      }
     }
     
     /**
@@ -140,30 +151,23 @@ namespace SC {
     {
       std::cout << "addOrganicSubsetAtom(" << element << ", " << aromatic << ")" << std::endl;
       SmartsAtomExpr *expr;
-      if (aromatic)
+      if (element == 0)
+        expr = new SmartsAtomExpr(Smiley::AE_True);
+      else if (element == -1)
+        expr = new SmartsAtomExpr(aromatic ? Smiley::AE_Aromatic : Smiley::AE_Aliphatic);
+      else if (aromatic)
         expr = new SmartsAtomExpr(Smiley::AE_AromaticElement);
       else
         expr = new SmartsAtomExpr(Smiley::AE_AliphaticElement);
       expr->leaf.value = element;
       smarts->atoms.resize(smarts->atoms.size() + 1);
       smarts->atoms.back().expr = expr;
+      smarts->atoms.back().index = smarts->atoms.size() - 1;
     }
 
     void atomPrimitive(int type, int value)
     {
       std::cout << "atomPrimitive(" << type << ", " << value << ")" << std::endl;
-      if (type == Smiley::AE_RingMembership)
-        switch (value) {
-          case -1:
-            type = Smiley::AE_Cyclic;
-            break;
-          case 0:
-            type = Smiley::AE_Acyclic;
-            break;
-          default:
-            break;
-        }
-
       atomExpr.push_back(new SmartsAtomExpr(type));
       atomExpr.back()->leaf.value = value;
     }
@@ -173,6 +177,7 @@ namespace SC {
       if (atomExpr.size())
         createAtomExprTree();
       std::cout << "bondPrimitive(" << type << ")" << std::endl;
+      bondExpr.push_back(new SmartsBondExpr(type));
     }
 
     void setPrevious(int index)
@@ -202,14 +207,13 @@ namespace SC {
       return 5;
     }
 
-    void createAtomExprTree()
+    template<typename Expr>
+    void infixToPostfix(const std::vector<Expr*> &infix, std::vector<Expr*> &operations, std::vector<Expr*> &postfix)
     {
-      // convert infix to postfix
-      std::vector<SmartsAtomExpr*> operations, postfix;
-      for (std::size_t i = 0; i < atomExpr.size(); ++i) {
-        int prec = precedence(atomExpr[i]->type);
+      for (std::size_t i = 0; i < infix.size(); ++i) {
+        int prec = precedence(infix[i]->type);
 
-        switch (atomExpr[i]->type) {
+        switch (infix[i]->type) {
           case Smiley::OP_Not:
           case Smiley::OP_AndHi:
           case Smiley::OP_AndLo:
@@ -218,10 +222,10 @@ namespace SC {
               postfix.push_back(operations.back());
               operations.pop_back();
             }
-            operations.push_back(atomExpr[i]);
+            operations.push_back(infix[i]);
             break;
           default:
-            postfix.push_back(atomExpr[i]);
+            postfix.push_back(infix[i]);
             break;
         }
       }
@@ -230,17 +234,22 @@ namespace SC {
         postfix.push_back(operations.back());
         operations.pop_back();
       }
+    }
 
-      print_expr_vector("postfix", postfix);
-      print_expr_vector("operations", operations);
+    template<typename Expr>
+    Expr* postfixToTree(const std::vector<Expr*> &postfix)
+    {
+      // stack for converting postfix to tree
+      std::vector<Expr*> operands;
 
-      std::vector<SmartsAtomExpr*> operands;
       for (std::size_t i = 0; i < postfix.size(); ++i) {
         switch (postfix[i]->type) {
           case Smiley::OP_Not:
             assert(!operands.empty());
             postfix[i]->unary.arg = operands.back();
+            // pop argument
             operands.pop_back();
+            // push result
             operands.push_back(postfix[i]);
             break;
           case Smiley::OP_AndHi:
@@ -249,20 +258,39 @@ namespace SC {
             assert(operands.size() > 1);
             postfix[i]->binary.lft = operands[operands.size() - 2];
             postfix[i]->binary.rgt = operands[operands.size() - 1];
+            // pop arguments
             operands.pop_back();
             operands.pop_back();
+            // push result
             operands.push_back(postfix[i]);
             break;
           default:
+            // push operand
             operands.push_back(postfix[i]);
             break;
         }
       }
 
       assert(operands.size() == 1);
-      smarts->atoms.resize(smarts->atoms.size() + 1);
-      smarts->atoms.back().expr = operands.front();
 
+      return operands.front();
+    }
+
+    void createAtomExprTree()
+    {
+      // convert infix to postfix
+      std::vector<SmartsAtomExpr*> operations, postfix;
+      infixToPostfix(atomExpr, operations, postfix);
+
+      print_expr_vector("postfix", postfix);
+      print_expr_vector("operations", operations);
+
+      // add the SmartsAtom
+      smarts->atoms.resize(smarts->atoms.size() + 1);
+      smarts->atoms.back().expr = postfixToTree(postfix);
+      smarts->atoms.back().index = smarts->atoms.size() - 1;
+
+      // clear the list of atom expressions
       atomExpr.clear();
     }
 
@@ -278,6 +306,7 @@ namespace SC {
     }
 
     std::vector<SmartsAtomExpr*> atomExpr;
+    std::vector<SmartsBondExpr*> bondExpr;
     Smarts *smarts;
   };
 

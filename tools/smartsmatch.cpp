@@ -7,6 +7,7 @@
 #include "args.h"
 
 #include <openbabel/obconversion.h>
+#include <openbabel/mol.h>
 
 using namespace SC;
 
@@ -42,13 +43,10 @@ int main(int argc, char**argv)
 
     std::string smarts = line.substr(0, line.find(" "));
     
-    OpenBabelSmartsMatcher matcher;
-    if (!matcher.Init(smarts))
-      continue;
-    OpenBabel::Pattern *pattern = matcher.GetPattern();
+    Smarts *s = parse(smarts);
 
     SmartsOptimizer optimizer(scores);
-    optimizer.Optimize(pattern);
+    optimizer.Optimize(s);
 
     std::ifstream mol_ifs(molFile.c_str());
     conv.SetInStream(&mol_ifs);
@@ -60,7 +58,7 @@ int main(int argc, char**argv)
       if (molCount >= 25000)
         break;
 
-      matcher.Match(mol);    
+      match(&mol, s);
     }
   }
 }
